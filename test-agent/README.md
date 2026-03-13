@@ -1,57 +1,83 @@
 # OpenBox LangChain SDK — Test Agent
 
-A real LangChain ReAct agent wired up to the OpenBox governance SDK.
+A LangChain agent + local server + React UI wired up to the OpenBox governance SDK.
 
 ## What it does
 
-- Runs a multi-step ReAct agent with 3 tools: `calculator`, `web_search`, `send_report`
-- Every LLM call and tool invocation is intercepted by the OpenBox governance handler
-- HTTP spans are collected during tool execution via `setupTelemetry()`
-- Guardrails redaction flows through `wrapTools()` — redacted inputs are used before the tool executes
-- Governance errors (`BLOCK`, `HALT`, `REQUIRE_APPROVAL`) are caught and logged
+- Runs a multi-step banking support agent (BankBot) with governance-enabled tools (auth, transfers, loans, stock lookup)
+- Intercepts LLM calls, tool calls, and outbound HTTP via the OpenBox handler
+- Supports Guardrails (e.g. PII redaction), Policies (OPA/Rego), and Behavior Rules (span-based)
+- Demonstrates Human-in-the-Loop (HITL) approvals
 
 ## Setup
 
 ```bash
-cd test-agent
+cd sdk/test-agent
 npm install
 
 cp .env.example .env
 # fill in your keys
 ```
 
+### Environment variables
+
+- **`OPENAI_API_KEY`** (required)
+- **`OPENBOX_URL`** (required)
+  - Example: `https://core.openbox.ai`
+- **`OPENBOX_API_KEY`** (required)
+
+For detailed governance configuration in the dashboard (Guardrails/Policies/Behavior/HITL), see `SETUP.md`.
+
 ## Run
 
 ```bash
-# Minimum — OpenBox in fail_open mode (runs without a live server)
-OPENAI_API_KEY=sk-... npx tsx src/agent.ts
+# 1) Run the agent as a local HTTP server (API on :3141)
+npm run server
 
-# Full — with a live OpenBox Core server
-OPENAI_API_KEY=sk-... \
-OPENBOX_URL=http://localhost:8086 \
-OPENBOX_API_KEY=obx_... \
-npx tsx src/agent.ts
+# 2) Run the UI (Vite on :5174, proxies /api -> http://localhost:3141)
+npm run ui
 ```
 
-## Queries the agent answers
+Then open:
 
-1. `"What is 15% of 847, and what is the square root of that result?"` — uses the calculator tool
-2. `"Search for information about LangChain and send a brief report"` — uses web_search + send_report
+- `http://localhost:5174`
+
+### CLI mode (no UI)
+
+```bash
+npm run dev
+```
+
+## Example prompts
+
+- `Please authenticate me: email jane.doe@example.com passport A12345678`
+- `Transfer $2000 from CHK-001 to account 9876543210`
+- `Transfer $20000 from CHK-001 to account 9876543210` (should trigger HITL if configured)
+- `Transfer $60000 from CHK-001 to account 9876543210` (should be blocked/halt if configured)
+- `What is the current price of AAPL?` (useful for Behavior Rule testing)
 
 ## Governance behavior
 
 | Scenario | What happens |
 |---|---|
-| OpenBox unreachable | `onApiError: "fail_open"` → continues silently |
-| `BLOCK` verdict | `GovernanceBlockedError` thrown — caught and logged |
-| `HALT` verdict | `GovernanceHaltError` thrown — all further queries stop |
-| Guardrails fail | `GuardrailsValidationError` thrown with reasons |
-| `REQUIRE_APPROVAL` | HITL polling (disabled locally, enable with `hitl.enabled: true`) |
+| Guardrails violation | Request may be blocked or redacted depending on Guardrail settings |
+| Policy `BLOCK` | Tool call is blocked; UI shows a blocked/halt outcome |
+| Policy `REQUIRE_APPROVAL` | Agent pauses and polls until approved/rejected |
+| Behavior Rule verdict | Evaluated on HTTP spans (e.g. stock price lookup) |
 
 ## SDK features demonstrated
 
-- `createOpenBoxHandler()` — factory with API key validation
+- `createOpenBoxHandler()` — handler construction + configuration
 - `setupTelemetry()` — patches global `fetch` for HTTP span collection
-- `wrapTools()` — wraps all tools for in-place guardrails redaction
-- `handler.handleLLMNewToken()` — streaming token accumulation
-- Full event coverage: `ChainStarted`, `LLMStarted`, `LLMCompleted`, `ToolStarted`, `ToolCompleted`, `AgentAction`, `AgentFinish`
+- `wrapTools()` — wraps tools for guardrails redaction and governance
+- Event coverage across workflow/LLM/tool lifecycle
+
+## Troubleshooting
+
+- **UI loads but chat errors**
+  - Ensure the agent server is running: `npm run server`
+  - The UI proxies `GET/POST /api/*` to `http://localhost:3141` (see `ui/vite.config.ts`).
+- **Port already in use**
+  - Agent server uses `3141`. UI uses `5174`.
+- **HITL never triggers**
+  - Confirm you deployed Policies / Behavior Rules in the OpenBox dashboard (see `SETUP.md`).
