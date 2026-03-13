@@ -1,0 +1,25 @@
+{
+  "name": "openbox-test-agent",
+  "version": "1.0.0",
+  "description": "Test LangChain agent using the OpenBox LangChain SDK",
+  "type": "module",
+  "scripts": {
+    "start": "node --experimental-vm-modules dist/agent.js",
+    "dev": "tsx src/agent.ts",
+    "server": "tsx src/agent.ts --server",
+    "build": "tsc",
+    "ui": "cd ui && npm install && npm run dev"
+  },
+  "dependencies": {
+    "@langchain/core": "^0.3.0",
+    "@langchain/openai": "^0.3.0",
+    "@langchain/community": "^0.3.0",
+    "langchain": "^0.3.0",
+    "@openbox/langchain-sdk": "file:../sdk"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0",
+    "tsx": "^4.0.0"
+  }
+}

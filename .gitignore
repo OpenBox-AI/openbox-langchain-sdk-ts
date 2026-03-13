@@ -1,1 +1,5 @@
 /node_modules
+test-agent/.env
+/test-agent/node_modules
+/test-agent/ui/node_modules
+test-agent/scripts/test-governance.sh
