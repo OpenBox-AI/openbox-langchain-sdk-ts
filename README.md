@@ -6,7 +6,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Node.js >= 18](https://img.shields.io/badge/node-%3E%3D18-brightgreen)](https://nodejs.org)
 
-The `@openbox/langchain-sdk` connects your LangChain agents to [OpenBox Core](https://openbox.ai) — giving you governance policies, guardrails, and human oversight without rewriting any agent logic.
+The `@openbox/langchain-sdk` connects your LangChain agents to [OpenBox](https://openbox.ai) — giving you governance policies, guardrails, and human oversight without rewriting any agent logic.
 
 **What it does:**
 - Intercepts every tool call, LLM invocation, and outbound HTTP request your agent makes
