@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node --experimental-vm-modules dist/agent.js",
     "dev": "tsx src/agent.ts",
-    "server": "tsx src/agent.ts --server",
+    "server": "set -a && source .env && set +a && tsx src/agent.ts --server",
     "build": "tsc",
     "ui": "cd ui && npm install && npm run dev"
   },
@@ -15,7 +15,7 @@
     "@langchain/openai": "^0.3.0",
     "@langchain/community": "^0.3.0",
     "langchain": "^0.3.0",
-    "@openbox/langchain-sdk": "file:../sdk"
+    "@openbox/langchain-sdk": "file:.."
   },
   "devDependencies": {
     "@types/node": "^20.0.0",

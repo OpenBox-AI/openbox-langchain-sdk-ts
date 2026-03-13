@@ -85,7 +85,7 @@ const CUSTOMERS: Record<string, Customer> = {
       {
         id: "CHK-001",
         type: "checking",
-        balance: 8_420.50,
+        balance: 8_420_000.50,
         currency: "USD",
         recentTransactions: [
           { date: "2026-03-10", description: "Salary deposit",        amount: +4_200.00 },
@@ -122,7 +122,7 @@ const CUSTOMERS: Record<string, Customer> = {
       {
         id: "CHK-002",
         type: "checking",
-        balance: 3_210.75,
+        balance: 3_210_750.75,
         currency: "USD",
         recentTransactions: [
           { date: "2026-03-10", description: "Salary deposit",  amount: +3_500.00 },

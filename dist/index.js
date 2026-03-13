@@ -1644,11 +1644,12 @@ init_types();
 init_errors();
 init_hook_governance();
 function _cleanGuardrailReason(reason) {
+  reason = reason.replace(/\n?-\s*Question:\s*\[Session context\][^\n]*\n?/g, "");
   const markers = ["\n\nThought:", "\n\nThought", "\nThought:", "\nThought"];
   for (const m of markers) {
     const idx = reason.indexOf(m);
     if (idx >= 0) {
-      return reason.slice(0, idx).trimEnd() + "\n\n";
+      return reason.slice(0, idx).trimEnd();
     }
   }
   return reason.trimEnd();

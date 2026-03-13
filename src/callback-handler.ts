@@ -65,11 +65,16 @@ import { configureHookGovernance } from "./hook-governance.js";
 function _cleanGuardrailReason(reason: string): string {
   // Guardrail services may echo the full prompt/trace including agent scratchpad.
   // We only want the human-readable reason header and the quoted offending text.
+  
+  // 1) Strip ReAct "Question:" line (includes session context) wherever it appears
+  reason = reason.replace(/\n?-\s*Question:\s*\[Session context\][^\n]*\n?/g, "");
+  
+  // 2) Strip agent scratchpad (Thought:, Action:, etc.)
   const markers = ["\n\nThought:", "\n\nThought", "\nThought:", "\nThought"];
   for (const m of markers) {
     const idx = reason.indexOf(m);
     if (idx >= 0) {
-      return reason.slice(0, idx).trimEnd() + "\n\n";
+      return reason.slice(0, idx).trimEnd();
     }
   }
   return reason.trimEnd();
