@@ -223,7 +223,9 @@ const handler = await createOpenBoxHandler({
   // Signal monitoring — polls for mid-run HALT/BLOCK signals from the dashboard
   enableSignalMonitor: true,   // default: false
 
-  // Session tracking — shown in the OpenBox dashboard
+  // Session tracking — optional, shown in the OpenBox dashboard
+  // - LangChain: `workflow_id` is auto-generated per run/turn. Use `sessionId` to group multiple runs
+  //   into a single logical user/chat session.
   sessionId: "user-session-abc123",
 
   // Raise errors on guardrail failures (default: false — returns a blocked message instead)
