@@ -337,7 +337,6 @@ Guardrails validate and optionally redact input and output at the field level. T
 | `"2"` | Content Filtering | Blocks specific topic categories (hate speech, self-harm, etc.) |
 | `"3"` | Toxicity | Blocks abusive, threatening, or harassing language |
 | `"4"` | Ban Words | Blocks messages containing specific words or phrases |
-| `"5"` | Regex Match | Custom pattern matching for domain-specific sensitive data |
 
 ### What happens when a guardrail triggers
 
