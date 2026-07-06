@@ -21,7 +21,7 @@ semver, e.g. `1.0.0`, no `v` prefix. That means:
 
 | Secret | Used by | Notes |
 |---|---|---|
-| `NPM_TOKEN` | `release.yml` (`publish` job) | npm automation token with publish rights to the `@openbox` scope. Create at npmjs.com -> Access Tokens -> Generate New Token -> Automation, then `gh secret set NPM_TOKEN --repo OpenBox-AI/openbox-langchain-sdk-ts` |
+| `NPM_TOKEN` | `release.yml` (`publish` job) | npm automation token with publish rights for the `openbox-langchain-governance` package (published unscoped — no npm org required, any account works). Create at npmjs.com -> Access Tokens -> Generate New Token -> Automation, then `gh secret set NPM_TOKEN --repo OpenBox-AI/openbox-langchain-sdk-ts` |
 | `SONAR_TOKEN`, `SONAR_HOST_URL` | `release.yml`, `pr-quality.yml` | Optional. SonarQube/SonarCloud steps skip cleanly (no failure) when either is unset. `sonar-project.properties` ships with a placeholder `projectKey` — update it to your real project key once you have one |
 | `CODECOV_TOKEN` | `pr-quality.yml` | Optional. Codecov upload step only runs when this is set and coverage was produced |
 

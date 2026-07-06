@@ -2,7 +2,7 @@
 
 ## Supported Versions
 
-Only the latest published release of `@openbox/langchain-governance` receives
+Only the latest published release of `openbox-langchain-governance` receives
 security fixes.
 
 ## Reporting a Vulnerability

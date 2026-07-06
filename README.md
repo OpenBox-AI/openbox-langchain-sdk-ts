@@ -33,7 +33,7 @@ by pushing a bare-semver tag like `1.0.0`), you'll be able to install it
 directly from the registry instead:
 
 ```bash
-npm install @openbox/langchain-governance
+npm install openbox-langchain-governance
 ```
 
 Requirements:
@@ -48,7 +48,7 @@ Wrap the lifecycle of an agent turn with `beforeAgent` / `wrapModelCall` / `afte
 
 ```typescript
 import { ChatOpenAI } from "@langchain/openai";
-import { OpenBoxLangChainMiddleware } from "@openbox/langchain-governance";
+import { OpenBoxLangChainMiddleware } from "openbox-langchain-governance";
 
 const mw = new OpenBoxLangChainMiddleware({
   apiKey: process.env.OPENBOX_API_KEY!,

@@ -1,5 +1,5 @@
 /**
- * @openbox/langchain-governance
+ * openbox-langchain-governance
  *
  * Standalone OpenBox governance middleware for LangChain JS/TS.
  * No n8n dependency — works with any LangChain application.
