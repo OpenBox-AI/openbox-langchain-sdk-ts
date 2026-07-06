@@ -25,13 +25,7 @@ npm run build
 ```
 
 `dist/` is gitignored on `main`, so consumers normally run the build
-themselves as above. Once a tag has a release branch (see
-[`.github/workflows/release-branch.yml`](.github/workflows/release-branch.yml)),
-you can instead pin a pre-built branch and skip the build step:
-
-```
-"@openbox/langchain-governance": "github:OpenBox-AI/openbox-langchain-sdk-ts#release-v1.0.0"
-```
+themselves as above.
 
 Once a version has been published via
 [`.github/workflows/release.yml`](.github/workflows/release.yml) (triggered

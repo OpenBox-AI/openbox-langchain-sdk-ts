@@ -6,16 +6,16 @@
 | `pr-quality.yml` | push/PR to `main`, or `workflow_dispatch` | Lint, typecheck, test (with coverage), build, optional SonarQube |
 | `pr-security.yml` | push/PR to `main`, or `workflow_dispatch` | Trivy filesystem scan + Gitleaks secret scan, both uploaded as SARIF to the Security tab |
 | `pr-governance.yml` | push/PR to `main`, or `workflow_dispatch` | On pull requests: enforces `<type>/<desc>` branch naming and Conventional Commits PR titles, and requires CODEOWNERS coverage for changes touching workflows/CODEOWNERS/SECURITY.md/.gitleaks.toml |
-| `release-branch.yml` | `workflow_dispatch` only | Builds the SDK and creates a `release-v*` branch with committed `dist/` so consumers can `github:OpenBox-AI/openbox-langchain-sdk-ts#release-v*` install without running a build step. Independent of `release.yml` — no registry involved, no `NPM_TOKEN` needed. Tag-push trigger is commented out until a first tagged release ships |
 
-**Tag format mismatch to be aware of:** `release.yml` validates tags against
-`^[0-9]+\.[0-9]+\.[0-9]+$` — bare semver, e.g. `1.0.0`, no `v` prefix. The
-`v1.0.0` tag already pushed for `release-branch.yml` does **not** match this
-pattern and will not trigger `release.yml`'s `release-governance` job
-correctly. Use bare tags (`git tag 1.0.0`) to cut an npm release; the two
-tagging schemes are independent since `release-branch.yml` takes its tag as
-a manual `workflow_dispatch` input rather than reading `github.ref_name`
-from a push.
+**`release.yml` reads its version from `github.ref_name`, not from an
+input.** It validates that ref against `^[0-9]+\.[0-9]+\.[0-9]+$` — bare
+semver, e.g. `1.0.0`, no `v` prefix. That means:
+
+- The normal path is a tag push: `git tag 1.0.0 && git push origin 1.0.0`.
+- If you dispatch it manually instead, you **must** pass `--ref <tag>`
+  pointing at an existing bare-semver tag — `--ref main` (or any branch)
+  will always fail the "Validate release tag format" step, since
+  `github.ref_name` will resolve to the branch name instead of a version.
 
 ## Required repo secrets
 
@@ -37,14 +37,17 @@ variables -> Actions -> Variables). Unset by default.
 
 Not present: this repo has no TypeSpec/OpenAPI spec system or upstream
 service to drift-check, so there's no `codegen.yml` or `spec-drift.yml`
-equivalent — those only make sense for spec-driven SDKs.
+equivalent — those only make sense for spec-driven SDKs. There is also no
+"pinnable git branch" release mechanism (no `release-branch.yml`) — `main`
+tags are the only release artifact; installing from source or from the npm
+registry are the two supported paths.
 
 `test-smoke.js` makes a real network call to OpenBox Core + OpenRouter and
 needs live `OPENBOX_API_KEY` / `OPENROUTER_API_KEY` secrets, so it's
 intentionally excluded from CI and run manually instead. Unit tests live in
 `tests/` and run via `npm run test` / `npm run ci:check`.
 
-## How to run a dispatch-only or manually-triggerable workflow
+## How to run a workflow manually
 
 GitHub UI: Actions tab, pick the workflow, "Run workflow", choose a
 branch.
@@ -52,16 +55,17 @@ branch.
 Via `gh`:
 
 ```bash
-gh workflow run release.yml          --ref main
 gh workflow run pr-quality.yml       --ref main
 gh workflow run pr-security.yml      --ref main
 gh workflow run pr-governance.yml    --ref main
-gh workflow run release-branch.yml   --ref main -f tag=v1.0.0
 ```
 
-To cut a real npm release, push a bare-semver tag instead of dispatching manually:
+`release.yml` is the exception — see above. Don't dispatch it against a
+branch; either push a tag (recommended) or dispatch with `--ref <tag>`:
 
 ```bash
 git tag 1.0.0
 git push origin 1.0.0
+# or, to re-run against an existing tag without pushing a new one:
+gh workflow run release.yml --ref 1.0.0
 ```
