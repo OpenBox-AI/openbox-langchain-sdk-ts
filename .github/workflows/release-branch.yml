@@ -2,7 +2,7 @@ name: release branch
 
 # Builds the SDK, then creates an immutable `release-v<tag>` branch
 # carrying the same source plus committed `dist/` artifacts. dist/ is
-# gitignored on master (consumers normally run `npm install && npm run
+# gitignored on main (consumers normally run `npm install && npm run
 # build` themselves), so this lets consumers pin a release branch and
 # skip the build step entirely:
 #
@@ -11,7 +11,7 @@ name: release branch
 # A second branch `release-latest` is force-updated to track the most
 # recent stable tag (alpha/beta/rc tags don't update it).
 #
-# Tags themselves stay on `master`; release branches are derivative.
+# Tags themselves stay on `main`; release branches are derivative.
 #
 # DISABLED on tag push until this package has shipped a first tagged
 # release and consumers are ready to pin against it. Re-enable by
@@ -69,7 +69,7 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git checkout -b "$BRANCH"
 
-          # Force-add the dist artifact that's gitignored on master.
+          # Force-add the dist artifact that's gitignored on main.
           git add -f dist/
 
           # Strip prepare/prepublishOnly hooks so consumer `npm install`

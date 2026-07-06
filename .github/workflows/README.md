@@ -22,8 +22,8 @@ branch.
 Via `gh`:
 
 ```bash
-gh workflow run test.yml            --ref master
-gh workflow run release-branch.yml  --ref master -f tag=v1.0.0
+gh workflow run test.yml            --ref main
+gh workflow run release-branch.yml  --ref main -f tag=v1.0.0
 ```
 
 ## How to enable a dispatch-only workflow on push/PR
@@ -33,7 +33,7 @@ Replace the `on:` block in the workflow YAML, e.g. for `test.yml`:
 ```yaml
 on:
   push:
-    branches: [master]
+    branches: [main]
   pull_request:
-    branches: [master]
+    branches: [main]
 ```
