@@ -33,6 +33,15 @@ you can instead pin a pre-built branch and skip the build step:
 "@openbox/langchain-governance": "github:OpenBox-AI/openbox-langchain-sdk-ts#release-v1.0.0"
 ```
 
+Once a version has been published via
+[`.github/workflows/release.yml`](.github/workflows/release.yml) (triggered
+by pushing a bare-semver tag like `1.0.0`), you'll be able to install it
+directly from the registry instead:
+
+```bash
+npm install @openbox/langchain-governance
+```
+
 Requirements:
 
 - Node.js 18+ (the SDK patches the global `fetch` API introduced in Node 18 for HTTP telemetry)
@@ -347,10 +356,18 @@ Module responsibilities:
 
 ## Testing
 
-There is no automated test suite yet. `test-smoke.js` makes a real
-network call to OpenBox Core and OpenRouter and needs live
-`OPENBOX_API_KEY` / `OPENROUTER_API_KEY` values in `.env`, so it's run
-manually rather than in CI:
+Unit tests cover the pure logic in `verdict.ts` and `hooks.ts` (verdict
+parsing/enforcement, message extraction, PII redaction, response-metadata
+extraction) — nothing that needs a network call:
+
+```bash
+npm run test          # vitest run --coverage
+npm run ci:check       # lint + typecheck + typecheck:examples + test
+```
+
+`test-smoke.js` is separate and makes a real network call to OpenBox Core
+and OpenRouter, needing live `OPENBOX_API_KEY` / `OPENROUTER_API_KEY`
+values in `.env`, so it's run manually rather than in CI:
 
 ```bash
 npm run build
@@ -358,11 +375,12 @@ node test-smoke.js
 ```
 
 See [`.github/workflows/`](.github/workflows/) for the CI workflows that
-do run automatically (typecheck + build).
+run automatically on every push/PR to `main` (lint, typecheck, test,
+build, security scanning) and the full release gate on tagged releases.
 
 ## License
 
-No `LICENSE` file has been added to this repository yet.
+MIT — see [LICENSE](LICENSE).
 
 ## Support
 

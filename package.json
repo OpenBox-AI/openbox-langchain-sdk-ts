@@ -2,13 +2,25 @@
   "name": "@openbox/langchain-governance",
   "version": "1.0.0",
   "description": "OpenBox governance middleware for LangChain JS/TS.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/OpenBox-AI/openbox-langchain-sdk-ts.git"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
     "typecheck": "tsc --noEmit",
-    "typecheck:examples": "tsc -p tsconfig.examples.json"
+    "typecheck:examples": "tsc -p tsconfig.examples.json",
+    "lint": "eslint src examples tests",
+    "test": "vitest run --coverage",
+    "ci:check": "npm run lint && npm run typecheck && npm run typecheck:examples && npm run test",
+    "pack:check": "npm pack --dry-run"
   },
   "dependencies": {
     "axios": "^1.7.2",
@@ -17,8 +29,12 @@
   "devDependencies": {
     "@langchain/openai": "^1.5.3",
     "@types/node": "^20.0.0",
+    "@vitest/coverage-v8": "^4.1.9",
+    "eslint": "^10.6.0",
     "tsx": "^4.23.0",
-    "typescript": "^5.4.0"
+    "typescript": "^5.4.0",
+    "typescript-eslint": "^8.62.1",
+    "vitest": "^4.1.9"
   },
   "peerDependencies": {
     "@langchain/core": ">=0.2.0"

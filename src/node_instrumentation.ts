@@ -192,19 +192,20 @@ function patchFsPromises(fs: typeof Fs): void {
   for (const operation of ['readFile', 'writeFile', 'appendFile']) {
     const original = promises[operation];
     if (typeof original !== 'function') continue;
-    promises[operation] = async function patchedFsPromise(path: unknown, dataOrOptions?: unknown, maybeOptions?: unknown) {
+    promises[operation] = async function patchedFsPromise(path: unknown, ...restArgs: unknown[]) {
+      const dataOrOptions = restArgs[0];
       const activityId = getCurrentActivityId();
-      if (!activityId) return Reflect.apply(original, this, arguments);
+      if (!activityId) return Reflect.apply(original, this, [path, ...restArgs]);
 
       const filePath = String(path);
-      if (shouldSkipFilePath(filePath)) return Reflect.apply(original, this, arguments);
+      if (shouldSkipFilePath(filePath)) return Reflect.apply(original, this, [path, ...restArgs]);
       const startMs = Date.now();
       const writes = operation !== 'readFile';
       const fileMode = operation === 'readFile' ? 'r' : operation === 'appendFile' ? 'a' : 'w';
 
       await evaluateFile(activityId, { filePath, fileMode, operation, stage: 'started', startMs });
       try {
-        const result = await Reflect.apply(original, this, arguments);
+        const result = await Reflect.apply(original, this, [path, ...restArgs]);
         const bytesRead = !writes && (typeof result === 'string' || Buffer.isBuffer(result))
           ? Buffer.byteLength(result)
           : undefined;
