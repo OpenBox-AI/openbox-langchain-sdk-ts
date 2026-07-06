@@ -1,0 +1,26 @@
+{
+  "name": "@openbox/langchain-governance",
+  "version": "1.0.0",
+  "description": "OpenBox governance middleware for LangChain JS/TS — standalone, no n8n dependency.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "typecheck": "tsc --noEmit",
+    "typecheck:examples": "tsc -p tsconfig.examples.json"
+  },
+  "dependencies": {
+    "@langchain/openai": "^1.5.3",
+    "axios": "^1.7.2",
+    "dotenv": "^17.4.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "tsx": "^4.23.0",
+    "typescript": "^5.4.0"
+  },
+  "peerDependencies": {
+    "@langchain/core": "^1.2.1"
+  }
+}

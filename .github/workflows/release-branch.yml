@@ -1,0 +1,99 @@
+name: release branch
+
+# Builds the SDK, then creates an immutable `release-v<tag>` branch
+# carrying the same source plus committed `dist/` artifacts. dist/ is
+# gitignored on master (consumers normally run `npm install && npm run
+# build` themselves), so this lets consumers pin a release branch and
+# skip the build step entirely:
+#
+#   "@openbox/langchain-governance": "github:sap1110/Langchain-SDK#release-v1.0.0"
+#
+# A second branch `release-latest` is force-updated to track the most
+# recent stable tag (alpha/beta/rc tags don't update it).
+#
+# Tags themselves stay on `master`; release branches are derivative.
+#
+# DISABLED on tag push until this package has shipped a first tagged
+# release and consumers are ready to pin against it. Re-enable by
+# uncommenting the `push: tags:` trigger below.
+# To run manually: GitHub Actions tab -> release branch -> Run workflow,
+# pick the tag name in the `tag` input.
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to publish a release branch for, such as v1.0.0'
+        required: true
+        type: string
+  # push:
+  #   tags:
+  #     - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Resolve tag
+        id: tag
+        run: |
+          # Tag-push event fills github.ref_name; manual dispatch supplies it via input.
+          TAG="${{ github.event.inputs.tag || github.ref_name }}"
+          echo "value=${TAG}" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ steps.tag.outputs.value }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - run: npm ci --prefer-offline --no-audit --no-fund
+
+      - run: npm run typecheck
+
+      - run: npm run build
+
+      - name: Create release branch
+        env:
+          TAG: ${{ steps.tag.outputs.value }}
+        run: |
+          BRANCH="release-${TAG}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$BRANCH"
+
+          # Force-add the dist artifact that's gitignored on master.
+          git add -f dist/
+
+          # Strip prepare/prepublishOnly hooks so consumer `npm install`
+          # doesn't try to rebuild from source; they get dist/ as-shipped.
+          # No-op today since package.json defines neither script yet —
+          # kept so this still does the right thing if one is added later.
+          node -e "
+            const fs = require('fs');
+            const p = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+            delete p.scripts.prepare;
+            delete p.scripts.prepublishOnly;
+            fs.writeFileSync('package.json', JSON.stringify(p, null, 2) + '\n');
+          "
+          git add package.json
+
+          git commit -m "release: $TAG (committed dist artifacts)"
+          git push origin "$BRANCH"
+
+      - name: Update release-latest (stable only)
+        if: |
+          !contains(steps.tag.outputs.value, '-alpha')
+          && !contains(steps.tag.outputs.value, '-beta')
+          && !contains(steps.tag.outputs.value, '-rc')
+        env:
+          TAG: ${{ steps.tag.outputs.value }}
+        run: |
+          git push -f origin "release-${TAG}:release-latest"

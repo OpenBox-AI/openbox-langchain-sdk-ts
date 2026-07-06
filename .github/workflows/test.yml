@@ -1,0 +1,47 @@
+# Standard test gate.
+#
+# DISABLED on push/PR until the suite has run clean a few times.
+# Re-enable by uncommenting the push/pull_request triggers below.
+#
+# This repo has no automated unit-test suite yet — test-smoke.js makes a
+# real network call to OpenBox Core + OpenRouter and needs live secrets,
+# so it's intentionally excluded from CI. This workflow only verifies the
+# package type-checks and builds cleanly.
+
+name: Test
+
+on:
+  workflow_dispatch:
+  # push:
+  #   branches: [master]
+  # pull_request:
+  #   branches: [master]
+
+jobs:
+  typecheck:
+    name: tsc --noEmit
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node: [20, 22]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run typecheck:examples
+
+  build:
+    name: tsc build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
