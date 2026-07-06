@@ -6,7 +6,7 @@ name: release branch
 # build` themselves), so this lets consumers pin a release branch and
 # skip the build step entirely:
 #
-#   "@openbox/langchain-governance": "github:sap1110/Langchain-SDK#release-v1.0.0"
+#   "@openbox/langchain-governance": "github:OpenBox-AI/openbox-langchain-sdk-ts#release-v1.0.0"
 #
 # A second branch `release-latest` is force-updated to track the most
 # recent stable tag (alpha/beta/rc tags don't update it).
