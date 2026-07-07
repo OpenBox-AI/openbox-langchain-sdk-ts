@@ -422,6 +422,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Build
+        run: npm run build
+
       - name: Read package metadata
         id: package
         shell: bash
