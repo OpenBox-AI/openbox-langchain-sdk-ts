@@ -30,7 +30,7 @@ import { createAgent, initChatModel, tool } from "langchain";
 import { HumanMessage, isAIMessage } from "@langchain/core/messages";
 import type { BaseMessage } from "@langchain/core/messages";
 
-import { createOpenBoxLangChainMiddleware } from "@openbox-ai/openbox-langchain-sdk/middleware";
+import { createOpenBoxLangChainMiddleware } from "openbox-langchain-governance/middleware";
 
 // Python configures the stdlib logging module (WARNING globally, DEBUG for the
 // "openbox_langchain" logger). The TS SDK exposes only a minimal warn-sink

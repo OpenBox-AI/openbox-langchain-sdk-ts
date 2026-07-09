@@ -17,7 +17,7 @@ import { FakeCore } from "@openbox-ai/openbox-sdk/conformance";
 import { OpenBoxRuntime } from "@openbox-ai/openbox-sdk/runtime";
 import { z } from "zod";
 
-import { createOpenBoxLangChainMiddleware } from "@openbox-ai/openbox-langchain-sdk/middleware";
+import { createOpenBoxLangChainMiddleware } from "openbox-langchain-governance/middleware";
 
 // ── A minimal fake chat model that emits one tool call, then a final answer ──
 class SmokeChatModel extends BaseChatModel {
