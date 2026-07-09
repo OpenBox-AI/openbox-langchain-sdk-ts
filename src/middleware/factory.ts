@@ -32,7 +32,12 @@ export interface OpenBoxLangChainMiddlewareBundle {
   middleware: AnyAgentMiddleware;
   runtime: OpenBoxRuntime;
   instrumentation: OpenBoxInstrumentationController | null;
-  /** Idempotent: shuts down instrumentation (if any) then closes the runtime. */
+  /**
+   * Idempotent: drains in-flight sync-fs completed telemetry (`flush()`), then
+   * shuts down instrumentation (if any), then closes the runtime. Awaiting this
+   * makes the last synchronous `readFileSync`/`writeFileSync`/`mkdirSync` event
+   * durable before teardown.
+   */
   close(): Promise<void>;
 }
 
@@ -79,12 +84,15 @@ export async function createOpenBoxLangChainMiddleware(
     middleware,
     runtime,
     instrumentation,
-    close(): Promise<void> {
-      // Both operations are synchronous and idempotent; the Promise return keeps
-      // a stable async cleanup contract for callers (`await openbox.close()`).
+    async close(): Promise<void> {
+      // Drain sync-fs completed telemetry BEFORE tearing down: the sync fs
+      // wrapper returns before its `runtime.completed(...)` promise settles, so
+      // flushing here keeps the last fs event durable. shutdown()/close() are
+      // synchronous and idempotent; flush() resolves immediately when sync fs
+      // (or all instrumentation) was never installed.
+      await instrumentation?.flush();
       instrumentation?.shutdown();
       runtime.close();
-      return Promise.resolve();
     }
   };
 }

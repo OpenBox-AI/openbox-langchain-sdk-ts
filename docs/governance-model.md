@@ -40,13 +40,18 @@ blocked run (the success-path `afterAgent` hook does not run after a throw).
 ## Single active runtime (instrumentation)
 
 Base instrumentation patches process-global HTTP/DB/file hooks and allows only
-**one** active runtime per process. The factory installs instrumentation
+**one** active runtime per process. File hooks cover `fs.promises.readFile`/
+`writeFile` (async, preflight-blockable) and `readFileSync`/`writeFileSync`/
+`mkdirSync` (sync, completed-hook telemetry only — a synchronous Node API cannot
+await Core before the op runs, so it is audited but never pre-blocked;
+`fileEnabled: false` disables both). The factory installs instrumentation
 default-ON but is **collision-safe**: a second middleware built on a different
 runtime in the same process catches the collision, logs a loud diagnostic, and
 continues with `instrumentation: null`. Governance is still enforced for that
 agent; only its low-level hook spans are not captured. The returned `close()` is
-always valid and idempotent (`instrumentation?.shutdown()` then
-`runtime.close()`).
+always valid and idempotent: it awaits `instrumentation?.flush()` (draining the
+fire-and-forget sync-fs completed telemetry) before `instrumentation?.shutdown()`
+then `runtime.close()`.
 
 ## Fail-open vs fail-closed
 

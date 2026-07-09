@@ -41,7 +41,10 @@ Two entry points. The root is import-light (`@langchain/core` only); the full
   — builds the runtime, validates the API key, installs base instrumentation
   (collision-safe), and returns `{ middleware, runtime, instrumentation, close() }`.
   Pass `middleware` to `createAgent({ middleware: [...] })`; `await close()` when
-  done.
+  done. `close()` drains in-flight sync-fs completed-hook telemetry
+  (`instrumentation.flush()`) before shutting down instrumentation and the
+  runtime, so the last synchronous `readFileSync`/`writeFileSync`/`mkdirSync`
+  event is not dropped — always `await` it.
 - `OpenBoxLangChainMiddlewareOptions` — `apiUrl`, `apiKey`, `agentName`,
   `agentDid`, `agentPrivateKey`, `onApiError` (default `fail_open`),
   `timeoutSeconds`, `envPrefix` (default `OPENBOX_LANGCHAIN`), `sessionId`,

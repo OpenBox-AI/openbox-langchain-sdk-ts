@@ -1,3 +1,7 @@
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import * as os from "node:os";
+import * as path from "node:path";
+
 import { tool } from "langchain";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
@@ -103,5 +107,66 @@ describe("middleware end-to-end (fakes only, no network)", () => {
     // workflowFailed telemetry precedes the rejection.
     expect(seq(evaluates)).toContain("WorkflowFailed");
     expect(seq(evaluates)).not.toContain("WorkflowCompleted");
+  });
+
+  it("correlates a governed tool's sync fs (mkdir/write/read) to the tool activity and drains it on close()", async () => {
+    // Real base instrumentation is installed for THIS test so the sync fs
+    // wrapper actually patches node:fs; every other e2e test opts out. The
+    // process-global install is freed by `await openbox.close()` in `finally`.
+    const scratch = mkdtempSync(path.join(os.tmpdir(), "openbox-lc-e2e-"));
+    let toolReturn: string | undefined;
+    let bundleClose: (() => Promise<void>) | undefined;
+    try {
+      const fsTool = tool(
+        () => {
+          const dir = path.join(scratch, "reports");
+          mkdirSync(dir, { recursive: true });
+          const file = path.join(dir, "out.txt");
+          writeFileSync(file, "hello-from-sync-fs");
+          toolReturn = readFileSync(file, "utf8");
+          return toolReturn;
+        },
+        { name: "fs_tool", description: "does sync fs work", schema: z.object({}) }
+      );
+      const model = new FakeChatModel({ script: [aiToolCall("fs_tool", {}), aiFinal("done")] });
+      const { agent, evaluates, openbox } = await buildGovernedAgent({
+        model,
+        tools: [fsTool],
+        mwOptions: { installInstrumentation: true }
+      });
+      bundleClose = () => openbox.close();
+
+      const result = await agent.invoke(humanTurn("go"));
+
+      // Drain BEFORE asserting: the sync fs wrapper returns before its
+      // completed-hook promise settles, so close() -> flush() is what makes the
+      // spans durable/observable here.
+      await openbox.close();
+
+      expect(toolReturn).toBe("hello-from-sync-fs"); // tool body returned the real content
+      expect(result.messages[result.messages.length - 1]?.content).toBe("done");
+
+      const fileSpans = evaluates
+        .flatMap((e) => (e.body.spans as Array<Record<string, unknown>> | undefined) ?? [])
+        .filter((s) => s && s["hook_type"] === "file_operation" && s["stage"] === "completed");
+      const names = fileSpans.map((s) => s["name"]);
+      expect(names).toContain("file.read"); // readFileSync
+      expect(names).toContain("file.write"); // writeFileSync + mkdirSync (both classified write, D6)
+      expect(fileSpans.length).toBeGreaterThanOrEqual(3); // mkdir + write + read
+
+      // Every file hook fired inside the fs_tool activity — correlated, not orphaned.
+      const fileEvalBodies = evaluates.filter((e) =>
+        ((e.body.spans as Array<Record<string, unknown>> | undefined) ?? []).some(
+          (s) => s["hook_type"] === "file_operation"
+        )
+      );
+      expect(fileEvalBodies.length).toBeGreaterThan(0);
+      for (const e of fileEvalBodies) {
+        expect(e.body.activity_type).toBe("fs_tool");
+      }
+    } finally {
+      await bundleClose?.(); // idempotent; also frees the process-global install if an assert threw
+      rmSync(scratch, { recursive: true, force: true });
+    }
   });
 });

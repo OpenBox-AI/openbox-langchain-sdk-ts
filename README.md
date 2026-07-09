@@ -52,7 +52,9 @@ const agent = createAgent({
 try {
   const result = await agent.invoke({ messages: [/* ... */] });
 } finally {
-  await openbox.close(); // shut down instrumentation + runtime
+  // Drains in-flight sync-fs completed-hook telemetry (flush()), then shuts
+  // down instrumentation + runtime. Always await it.
+  await openbox.close();
 }
 ```
 
@@ -75,6 +77,13 @@ The middleware runs each model and tool call inside an OpenBox activity scope
 base instrumentation resolve to the enclosing LLM/tool activity. This is the
 primary, supported correlation path. The callback surface offers a best-effort
 correlation seam only.
+
+File instrumentation covers `fs.promises.readFile`/`writeFile` (async,
+preflight-blockable) and `readFileSync`/`writeFileSync`/`mkdirSync` (sync,
+completed-hook telemetry only — a sync API cannot block before the op runs).
+`instrumentation.fileEnabled: false` disables both. Because the sync wrapper
+fires its telemetry after returning, `await openbox.close()` (which drains via
+`flush()`) so the last fs event is durable.
 
 ## Runnable example
 
