@@ -1,47 +1,63 @@
-/**
- * openbox-langchain-governance
- *
- * Standalone OpenBox governance middleware for LangChain JS/TS.
- * No n8n dependency — works with any LangChain application.
- */
+// Root entry point — MUST stay import-light.
+//
+// Only pure, side-effect-free symbols are re-exported here: SDK identity
+// constants plus (added incrementally) the ActivityBridge, the
+// observability-only core callback handler, and the lifecycle/telemetry
+// helpers. This module MUST NOT statically import `langchain`,
+// `@langchain/langgraph`, base-SDK instrumentation, network, or crypto — those
+// live behind the `./middleware` subpath or lazy imports. The
+// `scripts/check-root-import-light.mjs` guard and
+// `test/package-boundaries.test.ts` both enforce this.
 
-export { OpenBoxLangChainMiddleware, AgentState } from './middleware';
-export { GovernanceClient, SoftGovernanceError, ApprovalPollResponse } from './client';
-export { GovernanceConfig, OpenBoxLangChainMiddlewareOptions, HITLConfig, mergeConfig } from './config';
+export { SDK_VERSION } from "./version.js";
+export { SDK_ENGINE, SDK_LANGUAGE, SDK_PACKAGE_VERSION } from "./sdk-metadata.js";
+
+// ActivityBridge — pure, framework-neutral ownership tracking for the
+// observability callback surface (no network, no langchain).
+export { ActivityBridge } from "./activity-bridge.js";
+export type {
+  ActivityRecord,
+  EventType,
+  ToolRecordMetadata
+} from "./activity-bridge-records.js";
+
+// Lifecycle event helpers — envelope builders (snake_case session/agent
+// injection), tool-input enrichment, model-response metadata, human-prompt
+// extraction, and input redaction. Pure; base-SDK factories only.
 export {
-  GovernanceHaltError,
-  GovernanceBlockedError,
-  GuardrailsValidationError,
-  VerdictResult,
-  enforceVerdict,
-  verdictFromString,
-} from './verdict';
+  buildActivityCompleted,
+  buildActivityStarted,
+  buildSignalReceived,
+  buildWorkflowCompleted,
+  buildWorkflowFailed,
+  buildWorkflowStarted,
+  mergeSessionExtra
+} from "./lifecycle-events.js";
+export type {
+  ActivityCompletedBuild,
+  ActivityStartedBuild,
+  LifecycleEventIdentity,
+  SignalReceivedBuild,
+  WorkflowFailedBuild
+} from "./lifecycle-events.js";
 export {
-  GovernanceVerdictResponse,
-  GuardrailsResult,
-  LangChainGovernanceEvent,
-  VerdictArm,
-  hexId,
-  rfc3339Now,
-  safeSerialize,
-} from './types';
-export { pollApprovalOrHalt } from './hitl';
-export { handleBeforeAgent, handleAfterAgent, handleWrapModelCall, handleWrapMemoryOp } from './hook_handlers';
-export { handleWrapToolCall } from './tool_hook';
-export { buildSignedHeaders, serializeBody, EMPTY_BODY_SHA256 } from './signing';
+  enrichActivityInput,
+  extractResponseMetadata
+} from "./lifecycle-events-envelopes.js";
 export {
-  registerActivity,
-  unregisterActivity,
-  unregisterWorkflow,
-  runWithActivity,
-  getCurrentActivityId,
-  markActivityApproved,
-  isActivityApproved,
-  clearActivityAbort,
-  hasActivityAbort,
-  evaluateActivitySpan,
-  buildHttpSpanData,
-  addIgnoredPrefix,
-  shouldIgnore,
-  setupSpanProcessorInstrumentation,
-} from './span_processor';
+  buildRedactedUserMessage,
+  coerceRedactedText,
+  extractHumanTurnPrompt
+} from "./lifecycle-events-redaction.js";
+export type { RedactedMessage } from "./lifecycle-events-redaction.js";
+
+// The load-bearing non-enforcing telemetry evaluator, used by every completion
+// event and observer send on both surfaces.
+export { evaluateLifecycleTelemetryOnly } from "./lifecycle-telemetry.js";
+export type { Logger, TelemetryEvaluateOptions } from "./lifecycle-telemetry.js";
+
+// Observability-only core callback handler. Emits lifecycle telemetry + a
+// best-effort span-correlation seam; NEVER blocks (enforcement is the
+// middleware's job). Imports @langchain/core (allowed at root), never langchain.
+export { OpenBoxLangChainCoreCallbackHandler } from "./core-callback.js";
+export type { OpenBoxLangChainCoreCallbackOptions } from "./core-callback-options.js";
