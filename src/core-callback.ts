@@ -18,6 +18,7 @@ import {
   handleChatModelStartTelemetry,
   handleLlmCompletionTelemetry
 } from "./core-callback-llm.js";
+import { toErrorInfo } from "./error-info.js";
 import type {
   CoreCallbackState,
   OpenBoxLangChainCoreCallbackOptions
@@ -87,7 +88,7 @@ export class OpenBoxLangChainCoreCallbackHandler extends BaseCallbackHandler {
   }
 
   override async handleToolError(err: Error, runId: string): Promise<void> {
-    await handleToolCompletionTelemetry(this.state, runId, { error: String(err) });
+    await handleToolCompletionTelemetry(this.state, runId, { error: toErrorInfo(err) });
   }
 
   override async handleChatModelStart(
@@ -103,6 +104,6 @@ export class OpenBoxLangChainCoreCallbackHandler extends BaseCallbackHandler {
   }
 
   override async handleLLMError(err: Error, runId: string): Promise<void> {
-    await handleLlmCompletionTelemetry(this.state, runId, { error: String(err) });
+    await handleLlmCompletionTelemetry(this.state, runId, { error: toErrorInfo(err) });
   }
 }

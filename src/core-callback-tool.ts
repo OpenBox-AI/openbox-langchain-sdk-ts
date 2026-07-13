@@ -16,9 +16,15 @@ import {
   type CoreCallbackState
 } from "./core-callback-options.js";
 import { finishActivityTrace, registerActivityTrace } from "./core-callback-trace.js";
+import { toErrorInfo } from "./error-info.js";
 import { readProp } from "./property-access.js";
 import { toJsonSafe } from "./serialization.js";
-import { verdictShouldStop, type EvaluationResult, type JsonValue } from "@openbox-ai/openbox-sdk";
+import {
+  verdictShouldStop,
+  type ErrorInfo,
+  type EvaluationResult,
+  type JsonValue
+} from "@openbox-ai/openbox-sdk-ts";
 
 /** Build the tool ActivityStarted `activityInput` with the `__openbox` sentinel. */
 export function buildToolStartedInput(
@@ -95,7 +101,7 @@ export async function handleToolStartTelemetry(
 export async function handleToolCompletionTelemetry(
   state: CoreCallbackState,
   runId: string,
-  outcome: { result?: unknown; error?: string }
+  outcome: { result?: unknown; error?: ErrorInfo }
 ): Promise<void> {
   const activityId = runId;
   if (state.bridge.isCallbackOwned(state.workflowId, activityId, "tool_complete")) {
@@ -128,7 +134,7 @@ async function closeOrphanStart(
     ...identity(state),
     activityId,
     activityType,
-    error: result.reason ?? `Governance ${result.verdict}`
+    error: toErrorInfo(result.reason ?? `Governance ${result.verdict}`)
   });
   await evaluateLifecycleTelemetryOnly(state.runtime, envelope, logger(state));
   state.bridge.markSent(state.workflowId, activityId, "tool_complete");
@@ -138,7 +144,7 @@ async function sendToolCompleted(
   state: CoreCallbackState,
   activityId: string,
   toolName: string,
-  outcome: { result?: unknown; error?: string }
+  outcome: { result?: unknown; error?: ErrorInfo }
 ): Promise<void> {
   const envelope = buildActivityCompleted({
     ...identity(state),

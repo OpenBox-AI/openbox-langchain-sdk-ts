@@ -1,7 +1,7 @@
 // Activity-input enrichment and model-response metadata extraction.
 
 import { asFiniteNumber, readProp } from "./property-access.js";
-import type { JsonValue } from "@openbox-ai/openbox-sdk";
+import type { JsonValue } from "@openbox-ai/openbox-sdk-ts";
 
 /**
  * Append an `__openbox` metadata sentinel to the END of an activity-input list

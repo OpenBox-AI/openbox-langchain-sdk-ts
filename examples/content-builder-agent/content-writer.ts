@@ -17,7 +17,12 @@
  * `close()` handle, and `rich` console rendering is approximated with `chalk`.
  */
 
-import { mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import {
+  mkdir,
+  readdir,
+  readFile as fsReadFile,
+  writeFile as fsWriteFile
+} from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { argv, env } from "node:process";
@@ -100,11 +105,11 @@ Returns:
 );
 
 const writeFile = tool(
-  ({ file_path, content }) => {
+  async ({ file_path, content }) => {
     try {
       const path = join(EXAMPLE_DIR, file_path);
-      mkdirSync(dirname(path), { recursive: true });
-      writeFileSync(path, content);
+      await mkdir(dirname(path), { recursive: true });
+      await fsWriteFile(path, content);
       return `File written to ${path}`;
     } catch (e) {
       return `Error: ${String(e)}`;
@@ -129,10 +134,10 @@ Args:
 );
 
 const readFile = tool(
-  ({ file_path }) => {
+  async ({ file_path }) => {
     try {
       const path = join(EXAMPLE_DIR, file_path);
-      return readFileSync(path, "utf-8");
+      return await fsReadFile(path, "utf-8");
     } catch (e) {
       return `Error: ${String(e)}`;
     }
@@ -172,8 +177,8 @@ const generateCover = tool(
         const data = part.inlineData?.data;
         if (data) {
           const outputPath = join(EXAMPLE_DIR, "blogs", slug, "hero.png");
-          mkdirSync(dirname(outputPath), { recursive: true });
-          writeFileSync(outputPath, Buffer.from(data, "base64"));
+          await mkdir(dirname(outputPath), { recursive: true });
+          await fsWriteFile(outputPath, Buffer.from(data, "base64"));
           return `Image saved to ${outputPath}`;
         }
       }
@@ -218,8 +223,8 @@ const generateSocialImage = tool(
         const data = part.inlineData?.data;
         if (data) {
           const outputPath = join(EXAMPLE_DIR, platform, slug, "image.png");
-          mkdirSync(dirname(outputPath), { recursive: true });
-          writeFileSync(outputPath, Buffer.from(data, "base64"));
+          await mkdir(dirname(outputPath), { recursive: true });
+          await fsWriteFile(outputPath, Buffer.from(data, "base64"));
           return `Image saved to ${outputPath}`;
         }
       }
@@ -254,30 +259,33 @@ Args:
 // ═══════════════════════════════════════════════════════════════════
 
 /** Load all SKILL.md files and return their combined content. */
-function loadSkills(skillsDir: string): string {
+async function loadSkills(skillsDir: string): Promise<string> {
   const skillFiles: string[] = [];
-  const walk = (dir: string): void => {
-    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+  const walk = async (dir: string): Promise<void> => {
+    for (const entry of await readdir(dir, { withFileTypes: true })) {
       const full = join(dir, entry.name);
       if (entry.isDirectory()) {
-        walk(full);
+        await walk(full);
       } else if (entry.name === "SKILL.md") {
         skillFiles.push(full);
       }
     }
   };
-  walk(skillsDir);
+  await walk(skillsDir);
   // Lexicographic by full path (matches Python's sorted(rglob("SKILL.md")) for
   // the current skills/ layout; add prefix-colliding dir names only with care).
   skillFiles.sort();
-  return skillFiles
-    .map((file) => readFileSync(file, "utf-8"))
-    .join("\n\n---\n\n");
+  const skillContents = await Promise.all(
+    skillFiles.map((file) => fsReadFile(file, "utf-8"))
+  );
+  return skillContents.join("\n\n---\n\n");
 }
 
 /** Load subagent definitions from YAML. */
-function loadSubagentConfig(configPath: string): Record<string, unknown> {
-  return (yaml.load(readFileSync(configPath, "utf-8")) ?? {}) as Record<
+async function loadSubagentConfig(
+  configPath: string
+): Promise<Record<string, unknown>> {
+  return (yaml.load(await fsReadFile(configPath, "utf-8")) ?? {}) as Record<
     string,
     unknown
   >;
@@ -287,9 +295,9 @@ function loadSubagentConfig(configPath: string): Record<string, unknown> {
 // Researcher subagent
 // ═══════════════════════════════════════════════════════════════════
 
-/** Create and run the researcher subagent synchronously. */
+/** Create and run the researcher subagent. */
 async function runResearcher(topic: string, saveTo: string): Promise<string> {
-  const config = loadSubagentConfig(join(EXAMPLE_DIR, "subagents.yaml"));
+  const config = await loadSubagentConfig(join(EXAMPLE_DIR, "subagents.yaml"));
   const researcherSpec = (config.researcher ?? {}) as Record<string, unknown>;
   const systemPrompt =
     typeof researcherSpec.system_prompt === "string"
@@ -372,10 +380,10 @@ Args:
  */
 async function createContentWriter() {
   // Load memory (brand voice & style guide)
-  const agentsMd = readFileSync(join(EXAMPLE_DIR, "AGENTS.md"), "utf-8");
+  const agentsMd = await fsReadFile(join(EXAMPLE_DIR, "AGENTS.md"), "utf-8");
 
   // Load skills (blog-post, social-media workflows)
-  const skillsText = loadSkills(join(EXAMPLE_DIR, "skills"));
+  const skillsText = await loadSkills(join(EXAMPLE_DIR, "skills"));
 
   // Build system prompt combining memory + skills
   const systemPrompt = `${agentsMd}

@@ -13,8 +13,8 @@
 import { createAgent, createMiddleware } from "langchain";
 import { BaseCallbackHandler } from "@langchain/core/callbacks/base";
 import { HumanMessage } from "@langchain/core/messages";
-import { ActivityContext } from "@openbox-ai/openbox-sdk";
-import { ContextStore } from "@openbox-ai/openbox-sdk/context";
+import { ActivityContext } from "@openbox-ai/openbox-sdk-ts";
+import { ContextStore } from "@openbox-ai/openbox-sdk-ts/context";
 import { z } from "zod";
 import { describe, expect, it } from "vitest";
 

@@ -8,7 +8,7 @@
 // the enforcing middleware is the primary, supported correlation path.
 
 import type { CoreCallbackState } from "./core-callback-options.js";
-import { ActivityContext } from "@openbox-ai/openbox-sdk";
+import { ActivityContext } from "@openbox-ai/openbox-sdk-ts";
 
 /** Generate a 32-hex trace id (the shape the context store's trace map accepts). */
 function freshTraceId(): string {

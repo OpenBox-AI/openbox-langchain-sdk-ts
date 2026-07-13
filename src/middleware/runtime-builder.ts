@@ -9,11 +9,11 @@
 
 import { SDK_ENGINE, SDK_LANGUAGE, SDK_PACKAGE_VERSION } from "../sdk-metadata.js";
 import { DEFAULT_APPROVAL_MAX_WAIT_MS, type OpenBoxLangChainMiddlewareOptions } from "./options.js";
-import { ApprovalPoller } from "@openbox-ai/openbox-sdk/approvals";
-import { CoreAdapter } from "@openbox-ai/openbox-sdk/adapters";
-import { OpenBoxClient } from "@openbox-ai/openbox-sdk/client";
-import { OpenBoxConfig, type ResolveOptions } from "@openbox-ai/openbox-sdk/config";
-import { OpenBoxRuntime } from "@openbox-ai/openbox-sdk/runtime";
+import { ApprovalPoller } from "@openbox-ai/openbox-sdk-ts/approvals";
+import { CoreAdapter } from "@openbox-ai/openbox-sdk-ts/adapters";
+import { OpenBoxClient } from "@openbox-ai/openbox-sdk-ts/client";
+import { OpenBoxConfig, type ResolveOptions } from "@openbox-ai/openbox-sdk-ts/config";
+import { OpenBoxRuntime } from "@openbox-ai/openbox-sdk-ts/runtime";
 
 /** Resolve the finite approval wait: option wins, then config, then the finite default. */
 export function resolveApprovalMaxWait(

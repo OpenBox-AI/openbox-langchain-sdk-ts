@@ -2,7 +2,7 @@
 // Internal bookkeeping; `ActivityRecord` + `EventType` are re-exported from the
 // package root for the callback surface and any future embedding layer.
 
-import type { EvaluationResult } from "@openbox-ai/openbox-sdk";
+import type { EvaluationResult } from "@openbox-ai/openbox-sdk-ts";
 
 /**
  * Per-event-type sent-flag keys. Ownership is keyed on these, NEVER on record

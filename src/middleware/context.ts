@@ -4,12 +4,18 @@
 // BLOCK/HALT and driving approval), and every telemetry send goes through the
 // non-enforcing evaluator.
 
+import { toErrorInfo } from "../error-info.js";
 import { buildWorkflowFailed, type LifecycleEventIdentity } from "../lifecycle-events.js";
 import { evaluateLifecycleTelemetryOnly } from "../lifecycle-telemetry.js";
 import type { ResolvedMiddlewareOptions } from "./options.js";
 import type { ObTurn } from "./turn-state.js";
-import { ActivityContext, type EvaluationResult, type EventEnvelope } from "@openbox-ai/openbox-sdk";
-import type { OpenBoxRuntime } from "@openbox-ai/openbox-sdk/runtime";
+import {
+  ActivityContext,
+  type ErrorInfo,
+  type EvaluationResult,
+  type EventEnvelope
+} from "@openbox-ai/openbox-sdk-ts";
+import type { OpenBoxRuntime } from "@openbox-ai/openbox-sdk-ts/runtime";
 
 /** A value or a promise of it — LangChain wrap handlers may return either. */
 export type Awaitable<T> = T | Promise<T>;
@@ -19,10 +25,6 @@ export interface MiddlewareContext {
   runtime: OpenBoxRuntime;
   options: ResolvedMiddlewareOptions;
   workflowType: string;
-}
-
-export function errorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : String(error);
 }
 
 /** Identity fields for the lifecycle event builders. */
@@ -57,7 +59,7 @@ export async function sendTelemetry(
 export async function closeWorkflow(
   ctx: MiddlewareContext,
   turn: ObTurn,
-  error: string
+  error: ErrorInfo
 ): Promise<void> {
   if (turn.workflowClosed) return;
   turn.workflowClosed = true;
@@ -73,14 +75,16 @@ export async function enforceGate(
   ctx: MiddlewareContext,
   turn: ObTurn,
   envelope: EventEnvelope,
-  orphanClose?: (error: string) => Promise<void>
+  orphanClose?: (error: ErrorInfo) => Promise<void>
 ): Promise<EvaluationResult> {
   try {
     return await ctx.runtime.evaluateLifecycle(envelope);
   } catch (error) {
-    const message = errorMessage(error);
-    if (orphanClose) await orphanClose(message);
-    await closeWorkflow(ctx, turn, message);
+    // Convert the caught error ONCE — name/stack survive to the wire (e.g.
+    // `type: "ApprovalRejectedError"`), and the original error still rethrows.
+    const info = toErrorInfo(error);
+    if (orphanClose) await orphanClose(info);
+    await closeWorkflow(ctx, turn, info);
     throw error;
   }
 }

@@ -15,7 +15,7 @@ import {
   type CoreCallbackState
 } from "./core-callback-options.js";
 import { finishActivityTrace, registerActivityTrace } from "./core-callback-trace.js";
-import type { EventEnvelope } from "@openbox-ai/openbox-sdk";
+import type { ErrorInfo, EventEnvelope } from "@openbox-ai/openbox-sdk-ts";
 
 export const LLM_ACTIVITY_TYPE = "llm_call";
 
@@ -76,7 +76,7 @@ export async function handleChatModelStartTelemetry(
 export async function handleLlmCompletionTelemetry(
   state: CoreCallbackState,
   runId: string,
-  outcome: { response?: unknown; error?: string }
+  outcome: { response?: unknown; error?: ErrorInfo }
 ): Promise<void> {
   const eventRunId = runId;
   const record = state.bridge.getByEventRunId(state.workflowId, eventRunId);

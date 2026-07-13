@@ -3,7 +3,7 @@ import { HumanMessage } from "@langchain/core/messages";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 
-import type { OpenBoxRuntime } from "@openbox-ai/openbox-sdk/runtime";
+import type { OpenBoxRuntime } from "@openbox-ai/openbox-sdk-ts/runtime";
 import {
   aiFinal,
   aiToolCall,
@@ -74,6 +74,27 @@ describe("middleware enforcement (e2e)", () => {
     expect(has(evaluates, "WorkflowFailed")).toBe(true);
   });
 
+  it("a rejected approval closes the workflow with structured ApprovalRejectedError telemetry", async () => {
+    const model = new FakeChatModel({ script: [aiFinal("should not run")] });
+    const { agent, evaluates, adapter } = await buildGovernedAgent({
+      model,
+      route: (body) =>
+        isPreScreen(body) ? { verdict: "require_approval" } : { verdict: "allow" },
+      adapterOptions: { approvalOutcome: "reject" }
+    });
+
+    await expect(agent.invoke(humanTurn("needs approval"))).rejects.toThrow();
+    expect(model.callCount).toBe(0);
+    expect(adapter.calls.some((c) => c.kind === "handleApproval")).toBe(true);
+
+    const failed = evaluates.find((e) => e.body.event_type === "WorkflowFailed");
+    expect(failed).toBeDefined();
+    const error = failed?.body.error as Record<string, unknown>;
+    expect(error).toMatchObject({ type: "ApprovalRejectedError", message: "rejected by FakeAdapter" });
+    expect(typeof error.stack_trace).toBe("string");
+    expect(typeof failed?.body.error).not.toBe("string");
+  });
+
   it("blocks a tool start: the tool body never runs and the orphan row is closed failed", async () => {
     const model = new FakeChatModel({ script: [aiToolCall("echo", { text: "x" }), aiFinal("done")] });
     let toolRan = false;
@@ -93,8 +114,17 @@ describe("middleware enforcement (e2e)", () => {
       (e) => e.body.event_type === "ActivityCompleted" && e.body.activity_type === "echo"
     );
     expect(toolCompletions.length).toBeGreaterThanOrEqual(1);
-    expect(toolCompletions[0]?.body.error).toBeTruthy();
+    expect(toolCompletions[0]?.body.error).toMatchObject({
+      type: "GovernanceBlockedError",
+      message: "Governance block: tool denied"
+    });
     expect(has(evaluates, "WorkflowFailed")).toBe(true);
+    const failed = evaluates.find((e) => e.body.event_type === "WorkflowFailed");
+    expect(failed?.body.error).toMatchObject({ type: "GovernanceBlockedError" });
+    // NOTHING on the wire carries a top-level string error.
+    for (const e of evaluates) {
+      if (e.body.error !== undefined) expect(typeof e.body.error).not.toBe("string");
+    }
   });
 
   it("blocks a fresh (non-first) model call before its handler", async () => {

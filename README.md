@@ -2,7 +2,7 @@
 
 OpenBox governance + observability for [LangChain](https://www.langchain.com/) JS/TS
 agents. A thin adapter over the base SDK
-[`@openbox-ai/openbox-sdk`](https://www.npmjs.com/package/@openbox-ai/openbox-sdk),
+[`@openbox-ai/openbox-sdk-ts`](https://www.npmjs.com/package/@openbox-ai/openbox-sdk-ts),
 mirroring the architecture and wire behavior of `openbox-langchain-sdk-python`.
 
 > **Status:** active development; APIs may still change.
@@ -23,7 +23,7 @@ execution, so only the middleware can guarantee enforcement.
 ## Install
 
 ```bash
-npm install openbox-langchain-governance @openbox-ai/openbox-sdk @langchain/core
+npm install openbox-langchain-governance @openbox-ai/openbox-sdk-ts @langchain/core
 # For the enforcing middleware surface you also need the agent framework:
 npm install langchain
 ```

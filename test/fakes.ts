@@ -17,10 +17,10 @@ import {
   AUTH_VALIDATE_PATH,
   EVALUATE_PATH,
   OpenBoxClient
-} from "@openbox-ai/openbox-sdk/client";
-import { OpenBoxConfig } from "@openbox-ai/openbox-sdk/config";
-import { FakeAdapter, FakeCore } from "@openbox-ai/openbox-sdk/conformance";
-import { OpenBoxRuntime } from "@openbox-ai/openbox-sdk/runtime";
+} from "@openbox-ai/openbox-sdk-ts/client";
+import { OpenBoxConfig } from "@openbox-ai/openbox-sdk-ts/config";
+import { FakeAdapter, FakeCore } from "@openbox-ai/openbox-sdk-ts/conformance";
+import { OpenBoxRuntime } from "@openbox-ai/openbox-sdk-ts/runtime";
 import { z } from "zod";
 
 import { SDK_ENGINE, SDK_LANGUAGE, SDK_PACKAGE_VERSION } from "../src/index.js";

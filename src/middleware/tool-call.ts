@@ -7,11 +7,11 @@
 // rethrowing. Unlike the callback surface, the middleware tool input is NOT
 // enriched with the `__openbox` sentinel (Python parity).
 
+import { toErrorInfo } from "../error-info.js";
 import { buildActivityCompleted, buildActivityStarted } from "../lifecycle-events.js";
 import { toJsonSafe } from "../serialization.js";
 import {
   enforceGate,
-  errorMessage,
   identityFor,
   runWithCorrelation,
   sendTelemetry,
@@ -19,6 +19,7 @@ import {
   type MiddlewareContext
 } from "./context.js";
 import type { ObTurn } from "./turn-state.js";
+import type { ErrorInfo } from "@openbox-ai/openbox-sdk-ts";
 
 interface ToolRequestLike {
   toolCall: { name: string; args?: Record<string, unknown>; id?: string };
@@ -64,7 +65,7 @@ export async function handleWrapToolCall<TReq extends ToolRequestLike, TRes>(
     // A tool BODY failure (not a governance block) — record a failed completion
     // and rethrow. Not a governance closure, so the workflow is not closed here.
     await sendToolCompleted(ctx, turn, activityId, toolName, {
-      error: errorMessage(bodyError)
+      error: toErrorInfo(bodyError)
     });
     throw bodyError;
   }
@@ -75,7 +76,7 @@ async function sendToolCompleted(
   turn: ObTurn,
   activityId: string,
   toolName: string,
-  outcome: { result?: unknown; error?: string }
+  outcome: { result?: unknown; error?: ErrorInfo }
 ): Promise<void> {
   if (!ctx.options.sendToolEndEvent) return;
   await sendTelemetry(

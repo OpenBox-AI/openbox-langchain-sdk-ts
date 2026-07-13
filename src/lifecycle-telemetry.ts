@@ -17,9 +17,9 @@
 // lifecycle evaluate, and this is the sanctioned post-work telemetry pattern,
 // distinct from the enforcement boundary the runtime/adapter own.
 
-import { prepareLifecyclePayload } from "@openbox-ai/openbox-sdk";
-import type { EvaluationResult, EventEnvelope } from "@openbox-ai/openbox-sdk";
-import type { OpenBoxRuntime } from "@openbox-ai/openbox-sdk/runtime";
+import { prepareLifecyclePayload } from "@openbox-ai/openbox-sdk-ts";
+import type { EvaluationResult, EventEnvelope } from "@openbox-ai/openbox-sdk-ts";
+import type { OpenBoxRuntime } from "@openbox-ai/openbox-sdk-ts/runtime";
 
 /** Minimal logger sink for diagnostics (a subset of console). */
 export interface Logger {

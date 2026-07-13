@@ -11,10 +11,10 @@ import { createAgent, tool } from "langchain";
 import { BaseChatModel } from "@langchain/core/language_models/chat_models";
 import { AIMessage, HumanMessage, type BaseMessage } from "@langchain/core/messages";
 import type { ChatResult } from "@langchain/core/outputs";
-import { OpenBoxClient } from "@openbox-ai/openbox-sdk/client";
-import { OpenBoxConfig } from "@openbox-ai/openbox-sdk/config";
-import { FakeCore } from "@openbox-ai/openbox-sdk/conformance";
-import { OpenBoxRuntime } from "@openbox-ai/openbox-sdk/runtime";
+import { OpenBoxClient } from "@openbox-ai/openbox-sdk-ts/client";
+import { OpenBoxConfig } from "@openbox-ai/openbox-sdk-ts/config";
+import { FakeCore } from "@openbox-ai/openbox-sdk-ts/conformance";
+import { OpenBoxRuntime } from "@openbox-ai/openbox-sdk-ts/runtime";
 import { z } from "zod";
 
 import { createOpenBoxLangChainMiddleware } from "openbox-langchain-governance/middleware";

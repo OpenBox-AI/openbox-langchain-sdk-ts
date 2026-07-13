@@ -73,8 +73,8 @@ content-builder-agent/
 
 ```ts
 // Load memory + skills into system prompt
-const agentsMd = readFileSync(join(EXAMPLE_DIR, "AGENTS.md"), "utf-8");
-const skillsText = loadSkills(join(EXAMPLE_DIR, "skills"));
+const agentsMd = await fsReadFile(join(EXAMPLE_DIR, "AGENTS.md"), "utf-8");
+const skillsText = await loadSkills(join(EXAMPLE_DIR, "skills"));
 
 // Create OpenBox governance middleware (async: returns a bundle with close())
 const openbox = await createOpenBoxLangChainMiddleware({

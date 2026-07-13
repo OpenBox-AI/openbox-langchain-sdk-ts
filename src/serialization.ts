@@ -6,7 +6,7 @@
 // numbers, bigint, Map/Set, Date, and objects exposing `toJSON`.
 
 import { isUnknownArray, readProp } from "./property-access.js";
-import type { JsonValue } from "@openbox-ai/openbox-sdk";
+import type { JsonValue } from "@openbox-ai/openbox-sdk-ts";
 
 /** Coerce an arbitrary value to a JSON-safe `JsonValue`, never throwing. */
 export function toJsonSafe(value: unknown): JsonValue {

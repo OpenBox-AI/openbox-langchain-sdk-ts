@@ -1,4 +1,4 @@
-import { EvaluationResult } from "@openbox-ai/openbox-sdk";
+import { EvaluationResult } from "@openbox-ai/openbox-sdk-ts";
 import { describe, expect, it } from "vitest";
 
 import { ActivityBridge } from "../src/activity-bridge.js";

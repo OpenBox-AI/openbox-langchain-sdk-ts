@@ -3,8 +3,8 @@
 
 import type { ActivityBridge } from "./activity-bridge.js";
 import type { Logger } from "./lifecycle-telemetry.js";
-import type { ActivityContext, EvaluationResult } from "@openbox-ai/openbox-sdk";
-import type { OpenBoxRuntime } from "@openbox-ai/openbox-sdk/runtime";
+import type { ActivityContext, EvaluationResult } from "@openbox-ai/openbox-sdk-ts";
+import type { OpenBoxRuntime } from "@openbox-ai/openbox-sdk-ts/runtime";
 
 /**
  * Options for `OpenBoxLangChainCoreCallbackHandler`.

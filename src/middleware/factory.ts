@@ -12,8 +12,8 @@ import {
   OpenBoxInstrumentationError,
   type InitOpenBoxInstrumentationOptions,
   type OpenBoxInstrumentationController
-} from "@openbox-ai/openbox-sdk/instrumentation";
-import type { OpenBoxRuntime } from "@openbox-ai/openbox-sdk/runtime";
+} from "@openbox-ai/openbox-sdk-ts/instrumentation";
+import type { OpenBoxRuntime } from "@openbox-ai/openbox-sdk-ts/runtime";
 
 import { readProp } from "../property-access.js";
 import type { MiddlewareContext } from "./context.js";

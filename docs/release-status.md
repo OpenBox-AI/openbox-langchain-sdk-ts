@@ -4,9 +4,9 @@
 
 ## Blocker: base SDK is a local `file:` dependency
 
-`package.json` depends on the base SDK as `"@openbox-ai/openbox-sdk":
+`package.json` depends on the base SDK as `"@openbox-ai/openbox-sdk-ts":
 "file:../openbox-sdk-ts"`, not an npm semver. This is required because the
-**published** `@openbox-ai/openbox-sdk` on npm (all of `0.1.0`, `0.1.1`,
+**published** `@openbox-ai/openbox-sdk-ts` on npm (all of `0.1.0`, `0.1.1`,
 `0.1.2-beta.*`) is a **different package generation** than the local source this
 adapter is built against:
 

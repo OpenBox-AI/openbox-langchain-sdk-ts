@@ -40,6 +40,10 @@ export type {
   SignalReceivedBuild,
   WorkflowFailedBuild
 } from "./lifecycle-events.js";
+// Structured-error normalization — the one seam that turns anything thrown
+// into the `{type, message, stack_trace?}` object Core requires (pure).
+export { toErrorInfo } from "./error-info.js";
+
 export {
   enrichActivityInput,
   extractResponseMetadata

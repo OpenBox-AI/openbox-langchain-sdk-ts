@@ -30,7 +30,7 @@ import {
   type ToolRecordMetadata,
   type WorkflowRecords
 } from "./activity-bridge-records.js";
-import type { EvaluationResult } from "@openbox-ai/openbox-sdk";
+import type { EvaluationResult } from "@openbox-ai/openbox-sdk-ts";
 
 export type { ActivityRecord, EventType } from "./activity-bridge-records.js";
 

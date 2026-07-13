@@ -1,6 +1,6 @@
 import { HumanMessage } from "@langchain/core/messages";
 import type { Serialized } from "@langchain/core/load/serializable";
-import { EvaluationResult } from "@openbox-ai/openbox-sdk";
+import { EvaluationResult } from "@openbox-ai/openbox-sdk-ts";
 import { describe, expect, it } from "vitest";
 
 import { ActivityBridge } from "../src/activity-bridge.js";
@@ -96,5 +96,20 @@ describe("core callback — LLM lifecycle (observability-only)", () => {
     const before = h.core.lifecycleRequests.length;
     await h.handler.handleLLMError(new Error("late"), "llm-1");
     expect(h.core.lifecycleRequests.length).toBe(before);
+  });
+
+  it("a model failure sends structured ErrorInfo — never a string", async () => {
+    const h = harness();
+    await h.handler.handleChatModelStart(serial("chat"), messages(), "llm-1");
+    const thrown = new Error("provider 500");
+    await h.handler.handleLLMError(thrown, "llm-1");
+
+    const completed = h.core.lifecycleRequests.at(-1)?.bodyJson as Record<string, unknown>;
+    expect(completed.error).toStrictEqual({
+      type: "Error",
+      message: "provider 500",
+      stack_trace: thrown.stack
+    });
+    expect(typeof completed.error).not.toBe("string");
   });
 });

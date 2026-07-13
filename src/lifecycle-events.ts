@@ -17,9 +17,10 @@ import {
   workflowCompleted,
   workflowFailed,
   workflowStarted,
+  type ErrorInfo,
   type EventEnvelope,
   type JsonValue
-} from "@openbox-ai/openbox-sdk";
+} from "@openbox-ai/openbox-sdk-ts";
 
 /** Identity + telemetry fields common to every lifecycle event this adapter emits. */
 export interface LifecycleEventIdentity {
@@ -45,7 +46,8 @@ export interface ActivityCompletedBuild extends LifecycleEventIdentity {
   activityId: string;
   activityType: string;
   result?: JsonValue | null;
-  error?: string | null;
+  /** Structured error object Core requires — a bare string is rejected (400). */
+  error?: ErrorInfo | null;
   attempt?: number | null;
 }
 
@@ -54,7 +56,8 @@ export interface SignalReceivedBuild extends LifecycleEventIdentity {
 }
 
 export interface WorkflowFailedBuild extends LifecycleEventIdentity {
-  error?: string | null;
+  /** Structured error object Core requires — a bare string is rejected (400). */
+  error?: ErrorInfo | null;
 }
 
 /**

@@ -1,9 +1,9 @@
 // Options for `createOpenBoxLangChainMiddleware` and their resolved form.
 
 import type { Logger } from "../lifecycle-telemetry.js";
-import type { OnApiError } from "@openbox-ai/openbox-sdk/config";
-import type { DatabaseDriverName } from "@openbox-ai/openbox-sdk/instrumentation";
-import type { OpenBoxRuntime } from "@openbox-ai/openbox-sdk/runtime";
+import type { OnApiError } from "@openbox-ai/openbox-sdk-ts/config";
+import type { DatabaseDriverName } from "@openbox-ai/openbox-sdk-ts/instrumentation";
+import type { OpenBoxRuntime } from "@openbox-ai/openbox-sdk-ts/runtime";
 
 /**
  * Finite client-side approval wait used when neither the option nor

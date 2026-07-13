@@ -1,6 +1,6 @@
-import { ApprovalPoller } from "@openbox-ai/openbox-sdk/approvals";
-import { OpenBoxClient } from "@openbox-ai/openbox-sdk/client";
-import { FakeCore } from "@openbox-ai/openbox-sdk/conformance";
+import { ApprovalPoller } from "@openbox-ai/openbox-sdk-ts/approvals";
+import { OpenBoxClient } from "@openbox-ai/openbox-sdk-ts/client";
+import { FakeCore } from "@openbox-ai/openbox-sdk-ts/conformance";
 import { describe, expect, it } from "vitest";
 
 import { DEFAULT_APPROVAL_MAX_WAIT_MS } from "../src/middleware/options.js";

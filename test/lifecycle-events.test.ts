@@ -1,4 +1,4 @@
-import { prepareLifecyclePayload } from "@openbox-ai/openbox-sdk";
+import { prepareLifecyclePayload } from "@openbox-ai/openbox-sdk-ts";
 import { describe, expect, it } from "vitest";
 
 import {
@@ -91,10 +91,32 @@ describe("lifecycle event builders — snake_case wire keys", () => {
     expect(payload.agent_name).toBe("agent-1");
   });
 
-  it("emits a WorkflowFailed carrying the error", () => {
-    const payload = wire(buildWorkflowFailed({ ...identity, error: "governance block" }));
+  it("emits a WorkflowFailed carrying the structured error object, unchanged", () => {
+    const error = {
+      type: "ApprovalRejectedError",
+      message: "governance block",
+      stack_trace: "ApprovalRejectedError: governance block\n  at gate"
+    };
+    const payload = wire(buildWorkflowFailed({ ...identity, error }));
     expect(payload.workflow_id).toBe("wf-1");
-    expect(payload.error).toBe("governance block");
+    expect(payload.error).toStrictEqual(error);
+    expect(typeof payload.error).not.toBe("string");
+  });
+
+  it("emits an ActivityCompleted carrying the structured error object, unchanged", () => {
+    const error = { type: "ToolError", message: "boom" };
+    const payload = wire(
+      buildActivityCompleted({ ...identity, activityId: "a-1", activityType: "tool", error })
+    );
+    expect(payload.error).toStrictEqual(error);
+    expect(typeof payload.error).not.toBe("string");
+  });
+
+  it("no longer accepts a bare string error (Core rejects it with 400)", () => {
+    // @ts-expect-error — WorkflowFailedBuild.error is ErrorInfo | null, not string
+    buildWorkflowFailed({ ...identity, error: "governance block" });
+    // @ts-expect-error — ActivityCompletedBuild.error is ErrorInfo | null, not string
+    buildActivityCompleted({ ...identity, activityId: "a-1", activityType: "tool", error: "boom" });
   });
 });
 

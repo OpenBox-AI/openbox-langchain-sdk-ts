@@ -63,7 +63,9 @@ describe("core callback — tool lifecycle (observability-only)", () => {
     expect(h.core.lifecycleRequests.length).toBe(2);
     const completed = h.core.lifecycleRequests[1]?.bodyJson as Record<string, unknown>;
     expect(completed.activity_id).toBe("tool-1");
-    expect(completed.error).toBeTruthy();
+    // Governance denial closes the orphan with the structured error object.
+    expect(completed.error).toStrictEqual({ type: "Error", message: "denied" });
+    expect(typeof completed.error).not.toBe("string");
     expect(JSON.stringify(completed)).not.toContain("-c");
     // Verdict stashed; enforcement never happened.
     expect(h.bridge.get("wf-1", "tool-1")?.startResult?.verdict).toBe("block");
@@ -93,6 +95,23 @@ describe("core callback — tool lifecycle (observability-only)", () => {
     const before = h.core.lifecycleRequests.length;
     await h.handler.handleToolError(new Error("late"), "tool-1");
     expect(h.core.lifecycleRequests.length).toBe(before);
+  });
+
+  it("a tool failure sends structured ErrorInfo — name/message/stack preserved, never a string", async () => {
+    const h = harness();
+    await h.handler.handleToolStart(serial("echo"), "hi", "tool-1");
+    const thrown = new Error("tool exploded");
+    thrown.name = "ToolCrashError";
+    await h.handler.handleToolError(thrown, "tool-1");
+
+    const completed = h.core.lifecycleRequests.at(-1)?.bodyJson as Record<string, unknown>;
+    expect(completed.activity_id).toBe("tool-1");
+    expect(completed.error).toStrictEqual({
+      type: "ToolCrashError",
+      message: "tool exploded",
+      stack_trace: thrown.stack
+    });
+    expect(typeof completed.error).not.toBe("string");
   });
 
   it("suppresses record-less sends when recordLessOk is false", async () => {

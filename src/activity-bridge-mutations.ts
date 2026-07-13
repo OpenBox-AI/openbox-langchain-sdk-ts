@@ -3,7 +3,7 @@
 // workflow map — the bridge class owns lookup and calls these.
 
 import type { ActivityRecord, EventType } from "./activity-bridge-records.js";
-import type { EvaluationResult } from "@openbox-ai/openbox-sdk";
+import type { EvaluationResult } from "@openbox-ai/openbox-sdk-ts";
 
 /**
  * Flip one sent-flag. Callers mark the flag IMMEDIATELY after the envelope is

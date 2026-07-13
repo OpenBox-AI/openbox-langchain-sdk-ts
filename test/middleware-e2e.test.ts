@@ -6,7 +6,7 @@ import { tool } from "langchain";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 
-import type { OpenBoxRuntime } from "@openbox-ai/openbox-sdk/runtime";
+import type { OpenBoxRuntime } from "@openbox-ai/openbox-sdk-ts/runtime";
 import {
   aiFinal,
   aiToolCall,
