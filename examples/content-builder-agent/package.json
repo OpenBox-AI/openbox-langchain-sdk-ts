@@ -10,6 +10,7 @@
     "typecheck": "tsc -p ."
   },
   "dependencies": {
+    "@openbox-ai/openbox-sdk-ts": "^1.0.0",
     "openbox-langchain-governance": "file:../.."
   }
 }

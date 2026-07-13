@@ -68,7 +68,7 @@
   },
   "dependencies": {
     "@langchain/core": "^1.2.1",
-    "@openbox-ai/openbox-sdk-ts": "file:../openbox-sdk-ts"
+    "@openbox-ai/openbox-sdk-ts": "^1.0.0"
   },
   "peerDependencies": {
     "langchain": "^1.5.2"
