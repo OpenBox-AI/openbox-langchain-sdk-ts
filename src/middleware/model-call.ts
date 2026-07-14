@@ -8,9 +8,11 @@
 // trace-map fallback so base instrumentation correlates provider requests.
 
 import { buildActivityCompleted, buildActivityStarted } from "../lifecycle-events.js";
-import { buildRedactedUserMessage } from "../lifecycle-events-redaction.js";
+import {
+  buildRedactedUserMessage,
+  extractHumanTurnPrompt
+} from "../lifecycle-events-redaction.js";
 import { extractResponseMetadata } from "../lifecycle-events-envelopes.js";
-import { extractHumanTurnPrompt } from "../lifecycle-events-redaction.js";
 import {
   enforceGate,
   identityFor,

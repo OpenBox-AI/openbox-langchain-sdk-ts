@@ -19,15 +19,22 @@ export function toJsonSafe(value: unknown): JsonValue {
   }
 }
 
-function convert(value: unknown, seen: WeakSet<object>): JsonValue {
+/** Convert primitives and unserializable scalars; `undefined` = not a scalar. */
+function convertScalar(value: unknown): JsonValue | undefined {
   if (value === null || value === undefined) return null;
   if (typeof value === "string" || typeof value === "boolean") return value;
   if (typeof value === "number") return Number.isFinite(value) ? value : null;
   if (typeof value === "bigint") return value.toString();
   if (typeof value === "function" || typeof value === "symbol") return null;
+  return undefined;
+}
 
-  // Everything below is a non-null object (narrowed by the guards above).
-  const obj = value;
+function convert(value: unknown, seen: WeakSet<object>): JsonValue {
+  const scalar = convertScalar(value);
+  if (scalar !== undefined) return scalar;
+
+  // Everything below is a non-null object (convertScalar handled the rest).
+  const obj = value as object;
   if (seen.has(obj)) return "[Circular]";
   if (value instanceof Date) return value.toISOString();
 
