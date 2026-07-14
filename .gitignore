@@ -1,7 +1,7 @@
 # Secrets — never commit
 .env
-.env.local
-.env.*.local
+.env.*
+!.env.example
 
 # Dependencies
 node_modules/
@@ -9,11 +9,12 @@ node_modules/
 # Compiled output — recipients run `npm install && npm run build` themselves
 dist/
 
-# Lock file (optional — include if you want reproducible installs)
-# package-lock.json
-
 # Test coverage output
 coverage/
+
+# Build / tooling caches
+*.tsbuildinfo
+.eslintcache
 
 # npm pack/publish artifacts
 *.tgz
@@ -22,3 +23,11 @@ coverage/
 .DS_Store
 Thumbs.db
 *.log
+
+# Local Claude settings
+.claude/settings.local.json
+
+# Internal working artifacts — kept local, not published to the public repo
+_notes/
+plans/
+proposals/

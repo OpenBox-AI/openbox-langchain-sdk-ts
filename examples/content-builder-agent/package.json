@@ -1,0 +1,16 @@
+{
+  "name": "content-builder-agent",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Content writer agent (LangChain + OpenBox governance) — TypeScript example",
+  "scripts": {
+    "start": "node content-writer.ts",
+    "smoke": "node run-smoke-agent.ts",
+    "typecheck": "tsc -p ."
+  },
+  "dependencies": {
+    "@openbox-ai/openbox-sdk-ts": "^1.0.0",
+    "openbox-langchain-governance": "file:../.."
+  }
+}
