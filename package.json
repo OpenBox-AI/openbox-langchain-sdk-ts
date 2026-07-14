@@ -1,6 +1,6 @@
 {
   "name": "openbox-langchain-governance",
-  "version": "1.0.1",
+  "version": "2.0.0",
   "description": "OpenBox LangChain adapter for TypeScript — governance + observability parity over @openbox-ai/openbox-sdk-ts for LangChain JS/TS agents",
   "license": "MIT",
   "author": "OpenBox Team",
