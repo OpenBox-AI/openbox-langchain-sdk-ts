@@ -114,9 +114,14 @@ describe("lifecycle event builders — snake_case wire keys", () => {
 
   it("no longer accepts a bare string error (Core rejects it with 400)", () => {
     // @ts-expect-error — WorkflowFailedBuild.error is ErrorInfo | null, not string
-    buildWorkflowFailed({ ...identity, error: "governance block" });
+    const failed = buildWorkflowFailed({ ...identity, error: "governance block" });
+    const activity = { ...identity, activityId: "a-1", activityType: "tool", error: "boom" };
     // @ts-expect-error — ActivityCompletedBuild.error is ErrorInfo | null, not string
-    buildActivityCompleted({ ...identity, activityId: "a-1", activityType: "tool", error: "boom" });
+    const completed = buildActivityCompleted(activity);
+    // Runtime stays a pass-through: the compile-time ban above is the SDK-side
+    // gate, so a smuggled string would reach the wire unchanged (and 400).
+    expect(wire(failed).error).toBe("governance block");
+    expect(wire(completed).error).toBe("boom");
   });
 });
 

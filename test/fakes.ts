@@ -5,13 +5,12 @@
 // Extended in later phases with FakeCore verdict scripting.
 
 import { createAgent, tool } from "langchain";
-import { HumanMessage } from "@langchain/core/messages";
+import { AIMessage, HumanMessage, type BaseMessage } from "@langchain/core/messages";
 import type { CallbackManagerForLLMRun } from "@langchain/core/callbacks/manager";
 import {
   BaseChatModel,
   type BaseChatModelParams
 } from "@langchain/core/language_models/chat_models";
-import { AIMessage, type BaseMessage } from "@langchain/core/messages";
 import type { ChatResult } from "@langchain/core/outputs";
 import {
   AUTH_VALIDATE_PATH,

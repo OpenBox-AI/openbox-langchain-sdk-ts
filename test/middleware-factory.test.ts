@@ -1,8 +1,10 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { createOpenBoxLangChainMiddleware } from "../src/middleware/index.js";
+import {
+  createOpenBoxLangChainMiddleware,
+  type OpenBoxLangChainMiddlewareBundle
+} from "../src/middleware/index.js";
 import { makeFakeCoreRuntime } from "./fakes.js";
-import type { OpenBoxLangChainMiddlewareBundle } from "../src/middleware/index.js";
 
 const cleanups: OpenBoxLangChainMiddlewareBundle[] = [];
 afterEach(async () => {
