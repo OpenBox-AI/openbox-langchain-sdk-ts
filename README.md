@@ -100,6 +100,47 @@ Environment prefix `OPENBOX_LANGCHAIN_*` layered over global `OPENBOX_*`. See th
 base SDK for the full config surface. On-API-error posture defaults to
 `fail_open`; set `onApiError: "fail_closed"` for destructive agents.
 
+### Agent identity verification (OpenBox DID or Okta AI Agent)
+
+`createOpenBoxLangChainMiddleware`/`buildMiddlewareRuntime` forward the tagged
+identity configuration straight to the base SDK — this package never mints a
+signature or assertion itself.
+
+**OpenBox DID (v1, default):**
+
+```ts
+const openbox = await createOpenBoxLangChainMiddleware({
+  apiUrl: process.env.OPENBOX_API_URL,
+  apiKey: process.env.OPENBOX_API_KEY,
+  agentDid: process.env.OPENBOX_AGENT_DID,
+  agentPrivateKey: process.env.OPENBOX_AGENT_PRIVATE_KEY
+});
+```
+
+**Okta AI Agent (v2):**
+
+```ts
+const openbox = await createOpenBoxLangChainMiddleware({
+  apiUrl: process.env.OPENBOX_API_URL,
+  apiKey: process.env.OPENBOX_API_KEY,
+  agentId: process.env.OPENBOX_AGENT_ID,
+  organizationId: process.env.OPENBOX_ORGANIZATION_ID,
+  deploymentId: process.env.OPENBOX_DEPLOYMENT_ID,
+  agentProofAudience: process.env.OPENBOX_AGENT_PROOF_AUDIENCE,
+  oktaAgentId: process.env.OPENBOX_OKTA_AGENT_ID,
+  oktaAgentKeyId: process.env.OPENBOX_OKTA_AGENT_KEY_ID,
+  oktaAgentPrivateKey: process.env.OPENBOX_OKTA_AGENT_PRIVATE_KEY, // PKCS8 PEM, keep in a secret store
+  oktaAgentAlgorithm: "RS256"
+});
+```
+
+Every field above may also be set via the corresponding `OPENBOX_LANGCHAIN_*` or
+global `OPENBOX_*` environment variable (framework-prefixed wins), matching the
+existing config-layering precedence. `agentDid`/`agentPrivateKey` and the Okta
+fields are mutually exclusive — the base SDK rejects configuring both. An agent
+using `okta_ai_agent` automatically calls Core's `/api/v2/*` routes; the SDK
+never retries a v2 auth failure against v1.
+
 ## License
 
 MIT

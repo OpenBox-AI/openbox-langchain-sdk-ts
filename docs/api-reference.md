@@ -53,7 +53,17 @@ Two entry points. The root is import-light (`@langchain/core` only); the full
   `approvalPollIntervalMs`, `approvalMaxWaitMs` (`undefined` → finite default;
   explicit `null` → poll indefinitely), `installInstrumentation` (default true),
   `instrumentationStrict`, `databases`, `validate` (default true), `runtime`
-  (inject a pre-built one), `logger`.
+  (inject a pre-built one), `logger`, `fetchImpl` (injectable fetch for tests).
+  - **Agent identity (v1/v2)**: `identityMethod` (explicit `"openbox_did"` |
+    `"okta_ai_agent"` override — never `"legacy_unsigned"`, which is inferred
+    only), and the v2 (`okta_ai_agent`) fields `agentId`, `organizationId`,
+    `deploymentId`, `agentProofAudience`, `oktaAgentId`, `oktaAgentKeyId`,
+    `oktaAgentPrivateKey` (PKCS8 PEM, never logged), `oktaAgentAlgorithm`
+    (`"RS256"` only). All forwarded unchanged to
+    `@openbox-ai/openbox-sdk-ts/config`'s `OpenBoxConfig.resolve()` — this
+    package validates nothing about them and never constructs the
+    `X-OpenBox-Agent-Assertion` header itself. Mutually exclusive with
+    `agentDid`/`agentPrivateKey`; the base SDK rejects configuring both.
 - `DEFAULT_APPROVAL_MAX_WAIT_MS` — the finite client-side approval wait applied
   when neither option nor `config.hitl.maxWaitMs` sets one.
 - `openBoxStateSchema` — the graph-state schema the middleware contributes;
