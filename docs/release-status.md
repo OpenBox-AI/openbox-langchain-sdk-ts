@@ -40,3 +40,17 @@ next publish must bump the version — semver says **2.0.0**.
 
 Publishing is gated on explicit approval; do not publish as part of
 implementation.
+
+## Pending: IAM v3 base dependency floor
+
+The Keycloak workload identity (`keycloak_workload`) support depends on base SDK
+features that are not yet published (`OpenBoxClient.fromConfig`,
+`workloadPrivateKey`, `OpenBoxWorkloadAuthError`, the `AgentIdentityMethod` root
+type). Local development resolves the sibling checkout via
+`node_modules/@openbox-ai/openbox-sdk-ts -> ../openbox-sdk-ts`. Release order:
+publish the base major first (proposed `2.0.0`), then raise this package's
+`@openbox-ai/openbox-sdk-ts` range to that release (e.g. `^2.0.0`), regenerate
+`package-lock.json` from the registry, update the example's range, and publish this
+package as a coordinated major (proposed `3.0.0`). Until then `^1.0.0` does NOT
+guarantee the required base features — do not publish.
+

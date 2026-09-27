@@ -54,16 +54,22 @@ Two entry points. The root is import-light (`@langchain/core` only); the full
   explicit `null` → poll indefinitely), `installInstrumentation` (default true),
   `instrumentationStrict`, `databases`, `validate` (default true), `runtime`
   (inject a pre-built one), `logger`, `fetchImpl` (injectable fetch for tests).
-  - **Agent identity (v1/v2)**: `identityMethod` (explicit `"openbox_did"` |
-    `"okta_ai_agent"` override — never `"legacy_unsigned"`, which is inferred
-    only), and the v2 (`okta_ai_agent`) fields `agentId`, `organizationId`,
+  - **Agent identity (v1/v2/v3)**: `identityMethod` (the base SDK's
+    `AgentIdentityMethod`: explicit `"openbox_did"` | `"okta_ai_agent"` |
+    `"keycloak_workload"` override — never `"legacy_unsigned"`, which is inferred
+    only); `workloadPrivateKey` (IAM v3 `keycloak_workload`: PKCS8 PEM RSA key of
+    the agent's active Keycloak service account, `OPENBOX_LANGCHAIN_WORKLOAD_PRIVATE_KEY`
+    → `OPENBOX_WORKLOAD_PRIVATE_KEY`, never logged); and the v2 (`okta_ai_agent`) fields `agentId`, `organizationId`,
     `deploymentId`, `agentProofAudience`, `oktaAgentId`, `oktaAgentKeyId`,
     `oktaAgentPrivateKey` (PKCS8 PEM, never logged), `oktaAgentAlgorithm`
     (`"RS256"` only). All forwarded unchanged to
     `@openbox-ai/openbox-sdk-ts/config`'s `OpenBoxConfig.resolve()` — this
     package validates nothing about them and never constructs the
-    `X-OpenBox-Agent-Assertion` header itself. Mutually exclusive with
-    `agentDid`/`agentPrivateKey`; the base SDK rejects configuring both.
+    `X-OpenBox-Agent-Assertion` header or workload token itself. The DID, Okta,
+    and workload inputs are mutually exclusive; the base SDK rejects combining
+    them, and `OpenBoxClient.fromConfig` re-checks that even with `validate: false`.
+  - `runtime`: an injected runtime wins over every identity/config option (no
+    second client, no merged credentials); `close()` closes it and its client.
 - `DEFAULT_APPROVAL_MAX_WAIT_MS` — the finite client-side approval wait applied
   when neither option nor `config.hitl.maxWaitMs` sets one.
 - `openBoxStateSchema` — the graph-state schema the middleware contributes;
