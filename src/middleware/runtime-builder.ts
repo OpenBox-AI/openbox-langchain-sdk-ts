@@ -3,9 +3,13 @@
 // CoreAdapter needs the poller, and the runtime needs the adapter — so the
 // client is built and injected explicitly.
 //
-// GOTCHA: an INJECTED client does not inherit identity from config (only the
-// default client does), so every identity option is set on the client here to
-// preserve the `openbox-langchain-typescript-v<pkg>` header branding.
+// The client comes from the base SDK's shared `OpenBoxClient.fromConfig`, the
+// same config -> client mapping `OpenBoxRuntime` uses. It carries every
+// identity mode (DID, explicit Okta, Okta bootstrap, Keycloak workload, or
+// unsigned) and the `openbox-langchain-typescript-v<pkg>` branding from the
+// resolved config, so this package never assembles identity options — or mints
+// tokens — itself. One runtime, one client, one token cache for startup
+// validation, every gate, approval polling, hooks, and telemetry.
 
 import { SDK_ENGINE, SDK_LANGUAGE, SDK_PACKAGE_VERSION } from "../sdk-metadata.js";
 import { DEFAULT_APPROVAL_MAX_WAIT_MS, type OpenBoxLangChainMiddlewareOptions } from "./options.js";
@@ -33,10 +37,11 @@ export function buildMiddlewareRuntime(
     agentName: options.agentName ?? null,
     agentDid: options.agentDid ?? null,
     agentPrivateKey: options.agentPrivateKey ?? null,
-    // v2 (okta_ai_agent) tagged identity — forwarded unchanged; the base SDK
-    // owns validation, mutual-exclusion-with-DID enforcement, and method
-    // resolution (proposal §13.1, §13.7). `null` here is a no-op for every
-    // field the base config layering already treats as absent.
+    // Tagged identity (v2 okta_ai_agent, v3 keycloak_workload) — forwarded
+    // unchanged; the base SDK owns validation, mutual exclusion, the Okta-key
+    // migration alias, and method resolution (proposal §13.1, §13.7). `null`
+    // here is a no-op for every field the base config layering already treats
+    // as absent, so the OPENBOX_LANGCHAIN_* / OPENBOX_* env layering applies.
     identityMethod: options.identityMethod ?? null,
     agentId: options.agentId ?? null,
     organizationId: options.organizationId ?? null,
@@ -46,6 +51,7 @@ export function buildMiddlewareRuntime(
     oktaAgentKeyId: options.oktaAgentKeyId ?? null,
     oktaAgentPrivateKey: options.oktaAgentPrivateKey ?? null,
     oktaAgentAlgorithm: options.oktaAgentAlgorithm ?? null,
+    workloadPrivateKey: options.workloadPrivateKey ?? null,
     sdkVersion: SDK_PACKAGE_VERSION,
     sdkEngine: SDK_ENGINE,
     sdkLanguage: SDK_LANGUAGE,
@@ -60,22 +66,12 @@ export function buildMiddlewareRuntime(
 
   const config = OpenBoxConfig.resolve(resolveInput);
 
-  const client = new OpenBoxClient(config.apiUrl, config.apiKey, {
-    sdkVersion: SDK_PACKAGE_VERSION,
-    sdkEngine: SDK_ENGINE,
-    sdkLanguage: SDK_LANGUAGE,
-    identity: config.loadIdentity(),
-    // v2: `loadOktaIdentity()` resolves to non-null only when the config's
-    // resolved method is `okta_ai_agent` (mutually exclusive with `identity`
-    // above — `OpenBoxClient`'s constructor throws if both were ever non-null,
-    // which base's own mutual-exclusion validation already prevents). This is
-    // the ONLY change needed for evaluate/approval/validate/handoff to select
-    // v2 — the base client owns endpoint selection and assertion signing.
-    oktaIdentity: config.loadOktaIdentity(),
-    timeoutSeconds: config.timeoutSeconds,
-    onApiError: config.onApiError,
-    ...(options.fetchImpl !== undefined ? { fetchImpl: options.fetchImpl } : {})
-  });
+  // `validate: false` skips eager server validation and config normalization,
+  // but `fromConfig` still enforces identity-mode exclusivity and key checks.
+  const client = OpenBoxClient.fromConfig(
+    config,
+    options.fetchImpl !== undefined ? { fetchImpl: options.fetchImpl } : {}
+  );
 
   // Gate on config.hitl.enabled directly (defaults true, never nullish).
   const approvalPoller = config.hitl.enabled
