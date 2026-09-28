@@ -38,8 +38,10 @@ Two entry points. The root is import-light (`@langchain/core` only); the full
 ## `@openbox-ai/openbox-langchain-sdk/middleware` (enforcement)
 
 - `createOpenBoxLangChainMiddleware(options): Promise<OpenBoxLangChainMiddlewareBundle>`
-  — builds the runtime, validates the API key, installs base instrumentation
-  (collision-safe), and returns `{ middleware, runtime, instrumentation, close() }`.
+  — builds the runtime, validates the API key against Core (always — for v3 this
+  also acquires the first workload token, so a bad key or unusable identity fails
+  here), installs base instrumentation (collision-safe), and returns
+  `{ middleware, runtime, instrumentation, close() }`.
   Pass `middleware` to `createAgent({ middleware: [...] })`; `await close()` when
   done. `close()` drains in-flight sync-fs completed-hook telemetry
   (`instrumentation.flush()`) before shutting down instrumentation and the
@@ -52,7 +54,7 @@ Two entry points. The root is import-light (`@langchain/core` only); the full
   each also gates its enforcement + redaction), `skipToolTypes`,
   `approvalPollIntervalMs`, `approvalMaxWaitMs` (`undefined` → finite default;
   explicit `null` → poll indefinitely), `installInstrumentation` (default true),
-  `instrumentationStrict`, `databases`, `validate` (default true), `runtime`
+  `instrumentationStrict`, `databases`, `runtime`
   (inject a pre-built one), `logger`, `fetchImpl` (injectable fetch for tests).
   - **Agent identity (v1/v2/v3)**: `identityMethod` (the base SDK's
     `AgentIdentityMethod`: explicit `"openbox_did"` | `"okta_ai_agent"` |
@@ -67,7 +69,7 @@ Two entry points. The root is import-light (`@langchain/core` only); the full
     package validates nothing about them and never constructs the
     `X-OpenBox-Agent-Assertion` header or workload token itself. The DID, Okta,
     and workload inputs are mutually exclusive; the base SDK rejects combining
-    them, and `OpenBoxClient.fromConfig` re-checks that even with `validate: false`.
+    them before any request.
   - `runtime`: an injected runtime wins over every identity/config option (no
     second client, no merged credentials); `close()` closes it and its client.
 - `DEFAULT_APPROVAL_MAX_WAIT_MS` — the finite client-side approval wait applied

@@ -94,7 +94,6 @@ export interface OpenBoxLangChainMiddlewareOptions {
   databases?: readonly DatabaseDriverName[];
 
   // ── misc ──
-  validate?: boolean;
   /**
    * Inject a pre-built runtime (owns its own client, identity, adapter, and
    * approval semantics). When set, it WINS: the identity/config options above

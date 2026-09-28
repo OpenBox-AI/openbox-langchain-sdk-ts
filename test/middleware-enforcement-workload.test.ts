@@ -177,22 +177,39 @@ describe("approval over v3", () => {
 });
 
 describe("authentication and preparation failures stop protected execution", () => {
-  it.each([
-    ["bootstrap outage", (core: WorkloadCoreFake) => (core.bootstrap = () => json(503, {}))],
+  const acquisitionFailures: Array<[string, (core: WorkloadCoreFake) => void]> = [
+    ["bootstrap outage", (core) => (core.bootstrap = () => json(503, {}))],
     [
       "no active workload authority",
-      (core: WorkloadCoreFake) =>
-        (core.bootstrap = () => json(409, { code: 409, reason_code: "workload_identity_unavailable" }))
+      (core) => (core.bootstrap = () => json(409, { code: 409, reason_code: "workload_identity_unavailable" }))
     ],
-    ["Keycloak rejecting the key", (core: WorkloadCoreFake) => (core.token = () => json(401, { error: "invalid_client" }))],
-    ["token endpoint unreachable", (core: WorkloadCoreFake) => (core.token = () => Promise.reject(new TypeError("fetch failed")))]
-  ])("%s: the model executes zero times, even under fail_open", async (_label, arrange) => {
+    ["Keycloak rejecting the key", (core) => (core.token = () => json(401, { error: "invalid_client" }))],
+    ["token endpoint unreachable", (core) => (core.token = () => Promise.reject(new TypeError("fetch failed")))]
+  ];
+
+  it.each(acquisitionFailures)("%s at startup: middleware creation fails, even under fail_open", async (_label, arrange) => {
     const core = new WorkloadCoreFake();
     arrange(core);
     const model = new FakeChatModel({ script: [aiFinal("never")] });
-    const { agent } = await governedAgent(core, model, [], { validate: false, onApiError: "fail_open" });
+
+    await expect(governedAgent(core, model, [], { onApiError: "fail_open" })).rejects.toThrow();
+    expect(model.callCount).toBe(0);
+    expect(core.legacyCalls).toHaveLength(0);
+    expect(core.evaluateCalls).toHaveLength(0);
+  });
+
+  it.each(acquisitionFailures)("%s after startup: the model executes zero times, even under fail_open", async (_label, arrange) => {
+    const core = new WorkloadCoreFake();
+    const model = new FakeChatModel({ script: [aiFinal("never")] });
+    const { agent, openbox } = await governedAgent(core, model, [], { onApiError: "fail_open" });
+    arrange(core);
+    // Drop the startup token so the next governed call must re-acquire against the failing authority.
+    await openbox.runtime.client.refreshWorkloadIdentity().catch(() => undefined);
+    const authCallsBefore = core.bootstrapCalls.length + core.tokenCalls.length;
 
     await expect(agent.invoke(humanTurn("hello"))).rejects.toThrow();
+    // The gate itself tried to re-acquire, and failed, before the model could run.
+    expect(core.bootstrapCalls.length + core.tokenCalls.length).toBeGreaterThan(authCallsBefore);
     expect(model.callCount).toBe(0);
     expect(core.legacyCalls).toHaveLength(0);
     expect(core.evaluateCalls).toHaveLength(0);

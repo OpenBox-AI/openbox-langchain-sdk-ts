@@ -16,7 +16,6 @@ describe("createOpenBoxLangChainMiddleware factory", () => {
     const { runtime } = makeFakeCoreRuntime();
     const openbox = await createOpenBoxLangChainMiddleware({
       runtime,
-      validate: false,
       installInstrumentation: false
     });
     cleanups.push(openbox);
@@ -27,7 +26,6 @@ describe("createOpenBoxLangChainMiddleware factory", () => {
     const { runtime } = makeFakeCoreRuntime();
     const openbox = await createOpenBoxLangChainMiddleware({
       runtime,
-      validate: false,
       installInstrumentation: false
     });
     await expect(openbox.close()).resolves.toBeUndefined();
@@ -36,8 +34,7 @@ describe("createOpenBoxLangChainMiddleware factory", () => {
 
   it("is collision-safe: a second factory on a different runtime gets instrumentation:null with a diagnostic", async () => {
     const first = await createOpenBoxLangChainMiddleware({
-      runtime: makeFakeCoreRuntime().runtime,
-      validate: false
+      runtime: makeFakeCoreRuntime().runtime
       // installInstrumentation defaults ON
     });
     cleanups.push(first);
@@ -46,7 +43,6 @@ describe("createOpenBoxLangChainMiddleware factory", () => {
     const warn = vi.fn();
     const second = await createOpenBoxLangChainMiddleware({
       runtime: makeFakeCoreRuntime().runtime,
-      validate: false,
       logger: { warn }
     });
     cleanups.push(second);
@@ -58,15 +54,22 @@ describe("createOpenBoxLangChainMiddleware factory", () => {
     await expect(second.close()).resolves.toBeUndefined();
   });
 
-  it("validates the API key when validate is not false", async () => {
+  it("always validates the API key against Core before returning", async () => {
     const { runtime } = makeFakeCoreRuntime();
     const spy = vi.spyOn(runtime.client, "validateApiKey");
     const openbox = await createOpenBoxLangChainMiddleware({
       runtime,
       installInstrumentation: false
-      // validate defaults true
     });
     cleanups.push(openbox);
     expect(spy).toHaveBeenCalledOnce();
+  });
+
+  it("fails creation when Core rejects the API key", async () => {
+    const { runtime } = makeFakeCoreRuntime();
+    vi.spyOn(runtime.client, "validateApiKey").mockRejectedValue(new Error("Invalid API key"));
+    await expect(
+      createOpenBoxLangChainMiddleware({ runtime, installInstrumentation: false })
+    ).rejects.toThrow("Invalid API key");
   });
 });

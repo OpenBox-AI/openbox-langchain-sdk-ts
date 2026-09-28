@@ -71,7 +71,6 @@ async function main(): Promise<void> {
 
   const openbox = await createOpenBoxLangChainMiddleware({
     runtime: buildFakeRuntime(), // offline; real apps pass { apiUrl, apiKey } instead
-    validate: false,
     installInstrumentation: false,
     agentName: "content-builder"
   });

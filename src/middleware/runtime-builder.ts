@@ -54,8 +54,7 @@ export function buildMiddlewareRuntime(
     workloadPrivateKey: options.workloadPrivateKey ?? null,
     sdkVersion: SDK_PACKAGE_VERSION,
     sdkEngine: SDK_ENGINE,
-    sdkLanguage: SDK_LANGUAGE,
-    validate: options.validate ?? true
+    sdkLanguage: SDK_LANGUAGE
   };
   // Only assign fields that were provided (exactOptionalPropertyTypes forbids
   // passing `undefined` for these string/number/enum fields).
@@ -66,8 +65,6 @@ export function buildMiddlewareRuntime(
 
   const config = OpenBoxConfig.resolve(resolveInput);
 
-  // `validate: false` skips eager server validation and config normalization,
-  // but `fromConfig` still enforces identity-mode exclusivity and key checks.
   const client = OpenBoxClient.fromConfig(
     config,
     options.fetchImpl !== undefined ? { fetchImpl: options.fetchImpl } : {}

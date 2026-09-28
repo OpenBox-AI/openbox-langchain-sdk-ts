@@ -41,6 +41,15 @@ next publish must bump the version — semver says **2.0.0**.
 Publishing is gated on explicit approval; do not publish as part of
 implementation.
 
+## Breaking in the next major: `validate` option removed
+
+`createOpenBoxLangChainMiddleware` no longer accepts `validate`. It always checks
+the API key (and, for v3, the workload identity) against Core before returning,
+and config is always validated. Tests and offline runs use a fake Core that
+answers `/auth/validate` (the base `FakeCore` does) or inject a `runtime` whose
+client does. One consequence: the middleware cannot be created while Core is
+unreachable, whatever `onApiError` says.
+
 ## Pending: IAM v3 base dependency floor
 
 The Keycloak workload identity (`keycloak_workload`) support depends on base SDK

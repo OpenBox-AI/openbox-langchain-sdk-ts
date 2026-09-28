@@ -98,7 +98,7 @@ describe("buildMiddlewareRuntime — keycloak_workload forwarding", () => {
     expectWorkloadTraffic(core);
   });
 
-  it("rejects conflicting identity configuration even with validate: false", () => {
+  it("rejects conflicting identity configuration before any request", () => {
     const fetchImpl = vi.fn();
     expect(() =>
       buildMiddlewareRuntime({
@@ -106,7 +106,6 @@ describe("buildMiddlewareRuntime — keycloak_workload forwarding", () => {
         apiKey: WORKLOAD_API_KEY,
         workloadPrivateKey: PEM,
         oktaAgentPrivateKey: OTHER_PEM,
-        validate: false,
         fetchImpl: fetchImpl
       })
     ).toThrow(/workloadPrivateKey/);
@@ -115,7 +114,6 @@ describe("buildMiddlewareRuntime — keycloak_workload forwarding", () => {
         apiUrl: WORKLOAD_API_URL,
         apiKey: WORKLOAD_API_KEY,
         identityMethod: "keycloak_workload",
-        validate: false,
         fetchImpl: fetchImpl
       })
     ).toThrow(/no workload private key/);

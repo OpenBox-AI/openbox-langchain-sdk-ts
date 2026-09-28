@@ -169,7 +169,7 @@ Every field above may also be set via the corresponding `OPENBOX_LANGCHAIN_*` or
 global `OPENBOX_*` environment variable (framework-prefixed wins), matching the
 existing config-layering precedence. `agentDid`/`agentPrivateKey`, the Okta
 fields, and `workloadPrivateKey` are mutually exclusive — the base SDK rejects
-combining them (even with `validate: false`). An agent using `okta_ai_agent`
+combining them before any request. An agent using `okta_ai_agent`
 automatically calls Core's `/api/v2/*` routes (a key-only configuration uses Core's
 v2 identity bootstrap); the SDK never retries a v2 auth failure against v1.
 
