@@ -124,11 +124,10 @@ await openbox.close();
 
 The key may also come from `OPENBOX_LANGCHAIN_WORKLOAD_PRIVATE_KEY` (wins) or
 `OPENBOX_WORKLOAD_PRIVATE_KEY`, and the method from
-`OPENBOX_LANGCHAIN_AGENT_IDENTITY_METHOD` / `OPENBOX_AGENT_IDENTITY_METHOD`. Note that
-an env var set to an empty value still counts as set: an empty
-`OPENBOX_LANGCHAIN_WORKLOAD_PRIVATE_KEY=` shadows the global key, which — without an
-explicit `identityMethod` — leaves the agent in legacy API-key-only mode. Core
-supplies every other workload value. The base SDK fixes the client to `/api/v3/*`
+`OPENBOX_LANGCHAIN_AGENT_IDENTITY_METHOD` / `OPENBOX_AGENT_IDENTITY_METHOD`. A blank
+env var (empty or whitespace-only) counts as unset, so an empty
+`OPENBOX_LANGCHAIN_WORKLOAD_PRIVATE_KEY=` falls through to the global key instead of
+shadowing it. Core supplies every other workload value. The base SDK fixes the client to `/api/v3/*`
 before its first request, renews the short-lived workload token itself, and never
 falls back to v1/v2 or API-key-only requests: an authentication or token-acquisition
 failure at an enforcing gate throws before the model/tool handler runs — even under
