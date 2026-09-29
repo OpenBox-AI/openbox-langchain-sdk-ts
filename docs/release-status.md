@@ -1,7 +1,7 @@
 # Release status
 
-**Publishable pending a version bump + explicit approval.** The former hard
-blocker (local `file:` base SDK dependency) is resolved.
+**Versioned 3.0.0.** Publishable only after base 2.0.0 is on npm and this package's
+base range is raised (see below), and with explicit approval.
 
 ## Resolved: base SDK now a published npm semver
 
@@ -31,17 +31,16 @@ adapter-facing API this package targets (`./config`, `./runtime`,
   (identity test).
 - ESM-only, Node `>=24.10.0`, exports for `.` and `./middleware`.
 
-## Remaining gate: version
+## Version: 3.0.0
 
-`openbox-langchain-governance@1.0.1` is already published on npm (the
-pre-rewrite architecture from the upstream repo history). The local tree is a
-breaking re-architecture (`feat!`: callback + middleware surfaces), so the
-next publish must bump the version — semver says **2.0.0**.
+`@openbox-ai/openbox-langchain-governance@2.0.0` is published on npm. This tree
+breaks its API (the `validate` option is removed) and needs the base 2.x major for
+IAM v3, so it is versioned **3.0.0**.
 
 Publishing is gated on explicit approval; do not publish as part of
 implementation.
 
-## Breaking in the next major: `validate` option removed
+## Breaking in 3.0.0: `validate` option removed
 
 `createOpenBoxLangChainMiddleware` no longer accepts `validate`. It always checks
 the API key (and, for v3, the workload identity) against Core before returning,
@@ -56,10 +55,10 @@ The Keycloak workload identity (`keycloak_workload`) support depends on base SDK
 features that are not yet published (`OpenBoxClient.fromConfig`,
 `workloadPrivateKey`, `OpenBoxWorkloadAuthError`, the `AgentIdentityMethod` root
 type). Local development resolves the sibling checkout via
-`node_modules/@openbox-ai/openbox-sdk-ts -> ../openbox-sdk-ts`. Release order:
-publish the base major first (proposed `2.0.0`), then raise this package's
-`@openbox-ai/openbox-sdk-ts` range to that release (e.g. `^2.0.0`), regenerate
+`node_modules/@openbox-ai/openbox-sdk-ts -> ../openbox-sdk-ts`. The base is already
+bumped to `2.0.0` on its PR. Release order: publish base `2.0.0` first, then raise
+this package's `@openbox-ai/openbox-sdk-ts` range to `^2.0.0`, regenerate
 `package-lock.json` from the registry, update the example's range, and publish this
-package as a coordinated major (proposed `3.0.0`). Until then `^1.0.0` does NOT
-guarantee the required base features — do not publish.
+package as `3.0.0`. Until then `^1.0.0` does NOT guarantee the required base
+features — do not publish.
 
