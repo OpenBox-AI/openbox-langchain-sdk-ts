@@ -1,6 +1,6 @@
 {
   "name": "@openbox-ai/openbox-langchain-governance",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "description": "OpenBox LangChain adapter for TypeScript — governance + observability parity over @openbox-ai/openbox-sdk-ts for LangChain JS/TS agents",
   "license": "MIT",
   "author": "OpenBox Team",
@@ -68,7 +68,7 @@
   },
   "dependencies": {
     "@langchain/core": "^1.2.1",
-    "@openbox-ai/openbox-sdk-ts": "^2.0.0"
+    "@openbox-ai/openbox-sdk-ts": "^2.1.0"
   },
   "peerDependencies": {
     "langchain": "^1.5.2"

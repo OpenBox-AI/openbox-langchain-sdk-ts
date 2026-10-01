@@ -40,7 +40,7 @@ describe("middleware enforcement (e2e)", () => {
     expect(adapter.calls).toHaveLength(0);
     // Header identity branding.
     expect(evaluates[0]?.headers["x-openbox-sdk-version"]).toBe(
-      "openbox-langchain-typescript-v3.0.0"
+      "openbox-langchain-typescript-v3.0.1"
     );
   });
 
