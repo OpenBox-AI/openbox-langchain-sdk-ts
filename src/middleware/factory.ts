@@ -50,10 +50,9 @@ export async function createOpenBoxLangChainMiddleware(
 ): Promise<OpenBoxLangChainMiddlewareBundle> {
   const runtime = options.runtime ?? buildMiddlewareRuntime(options);
 
-  if (options.validate !== false) {
-    // Fast-fail on a bad key/signing before building the middleware.
-    await runtime.client.validateApiKey();
-  }
+  // Fast-fail on a bad API key, signing key, or workload identity before
+  // building the middleware: Core validates every request anyway.
+  await runtime.client.validateApiKey();
 
   const instrumentation = installInstrumentation(runtime, options);
 

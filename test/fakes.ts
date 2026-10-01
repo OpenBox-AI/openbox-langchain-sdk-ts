@@ -251,7 +251,6 @@ export async function buildGovernedAgent(config: {
   );
   const openbox = await createOpenBoxLangChainMiddleware({
     runtime,
-    validate: false,
     installInstrumentation: false,
     agentName: "test-agent",
     ...config.mwOptions

@@ -100,6 +100,83 @@ Environment prefix `OPENBOX_LANGCHAIN_*` layered over global `OPENBOX_*`. See th
 base SDK for the full config surface. On-API-error posture defaults to
 `fail_open`; set `onApiError: "fail_closed"` for destructive agents.
 
+### Agent identity verification (OpenBox DID, Okta AI Agent, or Keycloak workload)
+
+`createOpenBoxLangChainMiddleware`/`buildMiddlewareRuntime` forward the tagged
+identity configuration straight to the base SDK's `OpenBoxClient.fromConfig` —
+this package never mints a signature, assertion, or token itself. One runtime and
+one client (one token cache) serve startup validation, every gate, approval
+polling, HTTP/DB/file hooks, and completion telemetry.
+
+**Keycloak workload identity (IAM v3, `keycloak_workload`):**
+
+```ts
+const openbox = await createOpenBoxLangChainMiddleware({
+  apiUrl: process.env.OPENBOX_API_URL,
+  apiKey: process.env.OPENBOX_API_KEY,
+  identityMethod: "keycloak_workload", // recommended: a missing key is then an error
+  workloadPrivateKey: process.env.OPENBOX_WORKLOAD_PRIVATE_KEY, // PKCS8 PEM RSA, keep in a secret store
+  onApiError: "fail_closed"
+});
+// Supply openbox.middleware to createAgent; at shutdown:
+await openbox.close();
+```
+
+The key may also come from `OPENBOX_LANGCHAIN_WORKLOAD_PRIVATE_KEY` (wins) or
+`OPENBOX_WORKLOAD_PRIVATE_KEY`, and the method from
+`OPENBOX_LANGCHAIN_AGENT_IDENTITY_METHOD` / `OPENBOX_AGENT_IDENTITY_METHOD`. A blank
+env var (empty or whitespace-only) counts as unset, so an empty
+`OPENBOX_LANGCHAIN_WORKLOAD_PRIVATE_KEY=` falls through to the global key instead of
+shadowing it. Core supplies every other workload value. The base SDK fixes the client to `/api/v3/*`
+before its first request, renews the short-lived workload token itself, and never
+falls back to v1/v2 or API-key-only requests: an authentication or token-acquisition
+failure at an enforcing gate throws before the model/tool handler runs — even under
+`fail_open`. Best-effort completion/callback telemetry may log a sanitized send
+failure but never reopens a gate. An Okta-sourced agent moved to workload
+authentication may keep `oktaAgentPrivateKey` as the key only together with
+`identityMethod: "keycloak_workload"`. Candidate proofs go through
+`openbox.runtime.client.proveWorkloadIdentityTransition(...)`.
+
+**OpenBox DID (v1, default):**
+
+```ts
+const openbox = await createOpenBoxLangChainMiddleware({
+  apiUrl: process.env.OPENBOX_API_URL,
+  apiKey: process.env.OPENBOX_API_KEY,
+  agentDid: process.env.OPENBOX_AGENT_DID,
+  agentPrivateKey: process.env.OPENBOX_AGENT_PRIVATE_KEY
+});
+```
+
+**Okta AI Agent (v2):**
+
+```ts
+const openbox = await createOpenBoxLangChainMiddleware({
+  apiUrl: process.env.OPENBOX_API_URL,
+  apiKey: process.env.OPENBOX_API_KEY,
+  agentId: process.env.OPENBOX_AGENT_ID,
+  organizationId: process.env.OPENBOX_ORGANIZATION_ID,
+  deploymentId: process.env.OPENBOX_DEPLOYMENT_ID,
+  agentProofAudience: process.env.OPENBOX_AGENT_PROOF_AUDIENCE,
+  oktaAgentId: process.env.OPENBOX_OKTA_AGENT_ID,
+  oktaAgentKeyId: process.env.OPENBOX_OKTA_AGENT_KEY_ID,
+  oktaAgentPrivateKey: process.env.OPENBOX_OKTA_AGENT_PRIVATE_KEY, // PKCS8 PEM, keep in a secret store
+  oktaAgentAlgorithm: "RS256"
+});
+```
+
+Every field above may also be set via the corresponding `OPENBOX_LANGCHAIN_*` or
+global `OPENBOX_*` environment variable (framework-prefixed wins), matching the
+existing config-layering precedence. `agentDid`/`agentPrivateKey`, the Okta
+fields, and `workloadPrivateKey` are mutually exclusive — the base SDK rejects
+combining them before any request. An agent using `okta_ai_agent`
+automatically calls Core's `/api/v2/*` routes (a key-only configuration uses Core's
+v2 identity bootstrap); the SDK never retries a v2 auth failure against v1.
+
+**Injected runtime.** When you pass `runtime`, it wins: the identity/config options
+are ignored (no second client is built and no credentials are merged into it), and
+`close()` closes that runtime and its client — coordinate shutdown if you share it.
+
 ## License
 
 MIT

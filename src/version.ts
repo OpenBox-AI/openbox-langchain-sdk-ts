@@ -5,4 +5,4 @@
 // (keeping the header version static avoids a filesystem/JSON read on the hot
 // path). Anything needing the version for a wire header reads
 // `SDK_PACKAGE_VERSION`, re-exported from here via `sdk-metadata.ts`.
-export const SDK_VERSION = "2.0.0";
+export const SDK_VERSION = "3.0.0";

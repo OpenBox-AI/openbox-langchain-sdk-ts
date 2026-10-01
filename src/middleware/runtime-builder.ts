@@ -3,9 +3,13 @@
 // CoreAdapter needs the poller, and the runtime needs the adapter — so the
 // client is built and injected explicitly.
 //
-// GOTCHA: an INJECTED client does not inherit identity from config (only the
-// default client does), so every identity option is set on the client here to
-// preserve the `openbox-langchain-typescript-v<pkg>` header branding.
+// The client comes from the base SDK's shared `OpenBoxClient.fromConfig`, the
+// same config -> client mapping `OpenBoxRuntime` uses. It carries every
+// identity mode (DID, explicit Okta, Okta bootstrap, Keycloak workload, or
+// unsigned) and the `openbox-langchain-typescript-v<pkg>` branding from the
+// resolved config, so this package never assembles identity options — or mints
+// tokens — itself. One runtime, one client, one token cache for startup
+// validation, every gate, approval polling, hooks, and telemetry.
 
 import { SDK_ENGINE, SDK_LANGUAGE, SDK_PACKAGE_VERSION } from "../sdk-metadata.js";
 import { DEFAULT_APPROVAL_MAX_WAIT_MS, type OpenBoxLangChainMiddlewareOptions } from "./options.js";
@@ -33,10 +37,24 @@ export function buildMiddlewareRuntime(
     agentName: options.agentName ?? null,
     agentDid: options.agentDid ?? null,
     agentPrivateKey: options.agentPrivateKey ?? null,
+    // Tagged identity (v2 okta_ai_agent, v3 keycloak_workload) — forwarded
+    // unchanged; the base SDK owns validation, mutual exclusion, the Okta-key
+    // migration alias, and method resolution (proposal §13.1, §13.7). `null`
+    // here is a no-op for every field the base config layering already treats
+    // as absent, so the OPENBOX_LANGCHAIN_* / OPENBOX_* env layering applies.
+    identityMethod: options.identityMethod ?? null,
+    agentId: options.agentId ?? null,
+    organizationId: options.organizationId ?? null,
+    deploymentId: options.deploymentId ?? null,
+    agentProofAudience: options.agentProofAudience ?? null,
+    oktaAgentId: options.oktaAgentId ?? null,
+    oktaAgentKeyId: options.oktaAgentKeyId ?? null,
+    oktaAgentPrivateKey: options.oktaAgentPrivateKey ?? null,
+    oktaAgentAlgorithm: options.oktaAgentAlgorithm ?? null,
+    workloadPrivateKey: options.workloadPrivateKey ?? null,
     sdkVersion: SDK_PACKAGE_VERSION,
     sdkEngine: SDK_ENGINE,
-    sdkLanguage: SDK_LANGUAGE,
-    validate: options.validate ?? true
+    sdkLanguage: SDK_LANGUAGE
   };
   // Only assign fields that were provided (exactOptionalPropertyTypes forbids
   // passing `undefined` for these string/number/enum fields).
@@ -47,14 +65,10 @@ export function buildMiddlewareRuntime(
 
   const config = OpenBoxConfig.resolve(resolveInput);
 
-  const client = new OpenBoxClient(config.apiUrl, config.apiKey, {
-    sdkVersion: SDK_PACKAGE_VERSION,
-    sdkEngine: SDK_ENGINE,
-    sdkLanguage: SDK_LANGUAGE,
-    identity: config.loadIdentity(),
-    timeoutSeconds: config.timeoutSeconds,
-    onApiError: config.onApiError
-  });
+  const client = OpenBoxClient.fromConfig(
+    config,
+    options.fetchImpl !== undefined ? { fetchImpl: options.fetchImpl } : {}
+  );
 
   // Gate on config.hitl.enabled directly (defaults true, never nullish).
   const approvalPoller = config.hitl.enabled
