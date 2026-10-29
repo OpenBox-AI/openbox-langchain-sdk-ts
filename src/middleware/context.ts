@@ -11,6 +11,13 @@ import type { ResolvedMiddlewareOptions } from "./options.js";
 import type { ObTurn } from "./turn-state.js";
 import {
   ActivityContext,
+  ApprovalExpiredError,
+  ApprovalRejectedError,
+  ApprovalTimeoutError,
+  GovernanceBlockedError,
+  GovernanceHaltError,
+  GuardrailsValidationError,
+  verdictRequiresApproval,
   type ErrorInfo,
   type EvaluationResult,
   type EventEnvelope
@@ -52,6 +59,25 @@ export async function sendTelemetry(
 }
 
 /**
+ * Log a REQUIRE_APPROVAL returned on a model or tool ActivityCompleted. The
+ * call already ran, so there is nothing left to gate: the run continues
+ * without waiting, as in the other OpenBox SDKs — this only says why the
+ * request stays pending on the dashboard.
+ */
+export function noteCompletionVerdict(
+  ctx: MiddlewareContext,
+  result: EvaluationResult | null,
+  activityType: string
+): void {
+  if (result === null || !verdictRequiresApproval(result.verdict)) return;
+  (ctx.options.logger ?? console).warn(
+    `REQUIRE_APPROVAL returned after ${activityType} completed; continuing without waiting. ` +
+      "Match the rule on ActivityStarted to gate the operation." +
+      (result.reason ? ` Reason: ${result.reason}` : "")
+  );
+}
+
+/**
  * Send `workflowFailed` and mark the turn closed, once. Called by every
  * enforcing gate BEFORE it rethrows a block, so workflow-closure telemetry is
  * never lost on a blocked run (afterAgent does not run after a throw).
@@ -86,6 +112,53 @@ export async function enforceGate(
     if (orphanClose) await orphanClose(info);
     await closeWorkflow(ctx, turn, info);
     throw error;
+  }
+}
+
+/**
+ * The governance refusal behind `error`, if any. A hook-level stop raised
+ * inside a provider's `fetch` reaches the caller wrapped by that client (the
+ * OpenAI client reports it as "Connection error."), hiding the real reason.
+ */
+export function governanceCause(error: unknown): Error | null {
+  const seen = new Set<unknown>();
+  let current: unknown = error;
+  while (current instanceof Error && !seen.has(current)) {
+    if (
+      current instanceof GovernanceBlockedError ||
+      current instanceof GovernanceHaltError ||
+      current instanceof GuardrailsValidationError ||
+      current instanceof ApprovalRejectedError ||
+      current instanceof ApprovalExpiredError ||
+      current instanceof ApprovalTimeoutError
+    ) {
+      return current;
+    }
+    seen.add(current);
+    current = current.cause;
+  }
+  return null;
+}
+
+/**
+ * Run a model call or tool body inside its activity scope. A governance stop
+ * raised by a hook inside it closes the workflow (afterAgent never runs after
+ * a throw) and is rethrown as itself rather than as the client's wrapper.
+ */
+export async function runGoverned<R>(
+  ctx: MiddlewareContext,
+  turn: ObTurn,
+  activityId: string,
+  activityType: string,
+  invoke: () => Awaitable<R>
+): Promise<R> {
+  try {
+    return await runWithCorrelation(ctx, turn, activityId, activityType, invoke);
+  } catch (error) {
+    const governance = governanceCause(error);
+    if (governance === null) throw error;
+    await closeWorkflow(ctx, turn, toErrorInfo(governance));
+    throw governance;
   }
 }
 

@@ -3,6 +3,7 @@ import { HumanMessage } from "@langchain/core/messages";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 
+import { GovernanceBlockedError } from "@openbox-ai/openbox-sdk-ts";
 import type { OpenBoxRuntime } from "@openbox-ai/openbox-sdk-ts/runtime";
 import {
   aiFinal,
@@ -40,7 +41,7 @@ describe("middleware enforcement (e2e)", () => {
     expect(adapter.calls).toHaveLength(0);
     // Header identity branding.
     expect(evaluates[0]?.headers["x-openbox-sdk-version"]).toBe(
-      "openbox-langchain-typescript-v3.0.1"
+      "openbox-langchain-typescript-v3.1.0"
     );
   });
 
@@ -125,6 +126,49 @@ describe("middleware enforcement (e2e)", () => {
     for (const e of evaluates) {
       if (e.body.error !== undefined) expect(typeof e.body.error).not.toBe("string");
     }
+  });
+
+  it("logs a REQUIRE_APPROVAL on a tool completion and continues without waiting", async () => {
+    const model = new FakeChatModel({ script: [aiToolCall("echo", { text: "x" }), aiFinal("done")] });
+    let toolRan = false;
+    const warnings: string[] = [];
+    const { agent, adapter } = await buildGovernedAgent({
+      model,
+      tools: [makeEchoTool(() => (toolRan = true))],
+      route: (body) =>
+        body.event_type === "ActivityCompleted" && body.activity_type === "echo"
+          ? { verdict: "require_approval", reason: "review after the fact" }
+          : { verdict: "allow" },
+      mwOptions: { logger: { warn: (message: string) => warnings.push(message) } }
+    });
+
+    const result = await agent.invoke(humanTurn("use tool"));
+
+    // The tool already ran: nothing waits, the run finishes, and the request is logged.
+    expect(toolRan).toBe(true);
+    expect(String(result.messages.at(-1)?.content)).toBe("done");
+    expect(adapter.calls.filter((c) => c.kind === "handleApproval")).toHaveLength(0);
+    expect(warnings.some((w) => w.includes("after echo completed") && w.includes("review after the fact"))).toBe(true);
+  });
+
+  it("surfaces a hook-level block wrapped by the model client as the governance error", async () => {
+    // A provider client (e.g. OpenAI) reports a governed fetch refusal as
+    // "Connection error." with the GovernanceBlockedError as its cause.
+    const model = new FakeChatModel({
+      onGenerate: () => {
+        throw new Error("Connection error.", {
+          cause: new GovernanceBlockedError("block", "Behavioral violation: needs a prior lookup")
+        });
+      }
+    });
+    const { agent, evaluates } = await buildGovernedAgent({ model });
+
+    // LangGraph's runner rethrows a copy (adds pregelTaskId), so match by name.
+    const failure = agent.invoke(humanTurn("hi"));
+    await expect(failure).rejects.toMatchObject({ name: "GovernanceBlockedError" });
+    await expect(failure).rejects.toThrow("Behavioral violation");
+    const failed = evaluates.find((e) => e.body.event_type === "WorkflowFailed");
+    expect(failed?.body.error).toMatchObject({ type: "GovernanceBlockedError" });
   });
 
   it("blocks a fresh (non-first) model call before its handler", async () => {
