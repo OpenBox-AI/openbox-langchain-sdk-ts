@@ -1,5 +1,26 @@
 # Release status
 
+## Version: 3.1.0
+
+- Requires `@openbox-ai/openbox-sdk-ts` `^2.2.0`, which adds OpenRouter routing
+  provenance: a governed model call to `openrouter.ai` (the middleware already
+  runs each model call inside its `llm_call` activity scope, with the base
+  instrumentation installed) reports the serving provider, model, cost, token
+  usage and requested-vs-honored routing to the agent's Provenance tab, and the
+  client waits for the session's lookups before `WorkflowCompleted`. No adapter
+  code is needed for it. `OPENBOX_OPENROUTER_PROVENANCE=false` turns it off.
+- A REQUIRE_APPROVAL returned on a model or tool `ActivityCompleted` is now
+  logged (it was ignored silently). The call already ran, so the run still
+  continues without waiting — the same behavior as the other OpenBox SDKs.
+- A governance stop raised inside a model call or tool body (a hook-level
+  BLOCK/HALT on the provider's `fetch`) is surfaced as the governance error and
+  closes the workflow. The OpenAI client wrapped it as "Connection error.", so
+  callers saw a network failure and the session was left pending.
+- Requires base 2.2.0 to be published on npm; until then `npm ci` cannot
+  resolve `^2.2.0` and the lockfile is refreshed after publishing.
+
+## Previous: 3.0.1
+
 **Versioned 3.0.1.** Base SDK 2.1.0 is published on npm, and this package and its
 example now require `^2.1.0`. Local checks against that published base pass;
 publishing this adapter still requires explicit approval.
