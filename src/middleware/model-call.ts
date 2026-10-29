@@ -16,7 +16,8 @@ import { extractResponseMetadata } from "../lifecycle-events-envelopes.js";
 import {
   enforceGate,
   identityFor,
-  runWithCorrelation,
+  noteCompletionVerdict,
+  runGoverned,
   sendTelemetry,
   type Awaitable,
   type MiddlewareContext
@@ -54,7 +55,7 @@ export async function handleWrapModelCall<TReq extends ModelRequestLike, TRes>(
   if (turn.preScreen !== null && isFirstLlmCall(request.messages)) {
     const activityId = turn.preScreen.activityId;
     const modified = applyRedaction(request, turn.preScreen.redactedInput);
-    const response = await runWithCorrelation(ctx, turn, activityId, LLM_ACTIVITY_TYPE, () =>
+    const response = await runGoverned(ctx, turn, activityId, LLM_ACTIVITY_TYPE, () =>
       handler(modified)
     );
     await sendCompletion(ctx, turn, activityId, response);
@@ -79,7 +80,7 @@ export async function handleWrapModelCall<TReq extends ModelRequestLike, TRes>(
   }
 
   const modified = applyRedaction(request, redactedInput);
-  const response = await runWithCorrelation(ctx, turn, activityId, LLM_ACTIVITY_TYPE, () =>
+  const response = await runGoverned(ctx, turn, activityId, LLM_ACTIVITY_TYPE, () =>
     handler(modified)
   );
   await sendCompletion(ctx, turn, activityId, response);
@@ -93,7 +94,7 @@ async function sendCompletion(
   response: unknown
 ): Promise<void> {
   if (!ctx.options.sendLlmEndEvent) return;
-  await sendTelemetry(
+  const completed = await sendTelemetry(
     ctx,
     buildActivityCompleted({
       ...identityFor(ctx, turn),
@@ -102,4 +103,5 @@ async function sendCompletion(
       result: extractResponseMetadata(response)
     })
   );
+  noteCompletionVerdict(ctx, completed, LLM_ACTIVITY_TYPE);
 }

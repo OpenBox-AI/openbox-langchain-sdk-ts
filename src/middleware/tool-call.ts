@@ -13,7 +13,8 @@ import { toJsonSafe } from "../serialization.js";
 import {
   enforceGate,
   identityFor,
-  runWithCorrelation,
+  noteCompletionVerdict,
+  runGoverned,
   sendTelemetry,
   type Awaitable,
   type MiddlewareContext
@@ -56,14 +57,13 @@ export async function handleWrapToolCall<TReq extends ToolRequestLike, TRes>(
   }
 
   try {
-    const result = await runWithCorrelation(ctx, turn, activityId, toolName, () =>
-      handler(request)
-    );
+    const result = await runGoverned(ctx, turn, activityId, toolName, () => handler(request));
     await sendToolCompleted(ctx, turn, activityId, toolName, { result });
     return result;
   } catch (bodyError) {
-    // A tool BODY failure (not a governance block) — record a failed completion
-    // and rethrow. Not a governance closure, so the workflow is not closed here.
+    // Record the failed completion and rethrow. A governance stop inside the
+    // body has already closed the workflow (runGoverned); any other body
+    // failure is not a governance closure.
     await sendToolCompleted(ctx, turn, activityId, toolName, {
       error: toErrorInfo(bodyError)
     });
@@ -79,7 +79,7 @@ async function sendToolCompleted(
   outcome: { result?: unknown; error?: ErrorInfo }
 ): Promise<void> {
   if (!ctx.options.sendToolEndEvent) return;
-  await sendTelemetry(
+  const completed = await sendTelemetry(
     ctx,
     buildActivityCompleted({
       ...identityFor(ctx, turn),
@@ -89,4 +89,5 @@ async function sendToolCompleted(
       error: outcome.error ?? null
     })
   );
+  noteCompletionVerdict(ctx, completed, toolName);
 }
